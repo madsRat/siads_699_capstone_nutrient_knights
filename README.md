@@ -1,8 +1,7 @@
 Example code to get us started with RAG LLM for our Capstone Project.
 
-You will need to setup a Microsoft Azure account and create LLM instance in Azure AI Foundry. This will get you your LLM endponts and word vector embedding models. 
+You will need to setup a Microsoft Azure account and create LLM instance in Azure AI Foundry. This will get you your LLM endponts and word vector embedding models. Once you have this setup, you are ready to run the code. https://azure.microsoft.com/en-us/pricing/purchase-options/azure-account?icid=ai-foundry
 
-https://azure.microsoft.com/en-us/pricing/purchase-options/azure-account?icid=ai-foundry
 
 1. In terminal, type: pip install -r requirements.txt
 2. In python code, replace Microsoft Azure Endpoint with your credentials. For example, change the following in the python code.
