@@ -1,0 +1,58 @@
+
+def get_json(pdf_file_path):
+    json = ''
+    system_prompt = """Create a JSON for the information available in the document. Include all information in the JSON."""
+    model="gpt-4o-mini"
+    result = get_llm_response(pdf_file_path, model, system_prompt)
+    content = str(result)
+    content_string = content.replace("\\n", "\n").replace("\\'", "'").replace("\\\"", "\"")
+
+    json = extract_json(content_string)
+    return json
+
+def get_llm_response(pdf_file_path, model, system_prompt):
+    import os
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_openai import OpenAIEmbeddings
+    from langchain_core.vectorstores import InMemoryVectorStore
+    from langchain import hub
+    from langchain_openai import ChatOpenAI
+    
+    loader = PyPDFLoader(pdf_file_path)
+    docs = loader.load()
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,  
+        chunk_overlap=20,  
+        add_start_index=True,  
+    )
+    all_splits = text_splitter.split_documents(docs)
+
+    #ingestion
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-large", api_key=os.environ.get("OPENAI_API_KEY"))
+    vector_store = InMemoryVectorStore(embeddings)
+    vector_store.add_documents(documents=all_splits)
+    
+    prompt = hub.pull("rlm/rag-prompt", api_key=os.environ.get("OPENAI_API_KEY"))
+    system_prompt = system_prompt
+    retrieved_docs = vector_store.similarity_search(system_prompt)
+    docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
+    prompt = prompt.invoke({"context": docs_content, "question": system_prompt})
+
+    # initialize the llm
+    llm = ChatOpenAI(model=model)
+
+    return llm.invoke(prompt)
+
+def extract_json(text):
+    import re
+    
+    match = re.search(r'```json\n({.*?})\n```', text, re.DOTALL)
+    if match:
+        return match.group(1)
+    return None
+
+# To test
+# pdf_file_path = "./Food and Beverage Diary Cover Sheet.pdf"
+# print(get_json(pdf_file_path))
