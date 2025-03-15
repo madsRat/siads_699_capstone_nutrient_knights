@@ -10,6 +10,17 @@ def get_json(pdf_file_path):
     json = extract_json(content_string)
     return json
 
+def get_food_json(pdf_file_path):
+    json = ''
+    system_prompt = """Create a JSON for the food description and amount. Do not include other information in the JSON."""
+    model="gpt-4o-mini"
+    result = get_llm_response(pdf_file_path, model, system_prompt)
+    content = str(result)
+    content_string = content.replace("\\n", "\n").replace("\\'", "'").replace("\\\"", "\"")
+
+    json = extract_json(content_string)
+    return json
+
 def get_llm_response(pdf_file_path, model, system_prompt):
     import os
     from langchain_community.document_loaders import PyPDFLoader
@@ -56,3 +67,4 @@ def extract_json(text):
 # To test
 # pdf_file_path = "./Food and Beverage Diary Cover Sheet.pdf"
 # print(get_json(pdf_file_path))
+# print(get_food_json(pdf_file_path))
