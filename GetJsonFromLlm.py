@@ -5,8 +5,116 @@ def get_json_plaintext(plaintxt):
     from langchain_openai import ChatOpenAI
     
     json = ''
-    system_prompt = """Create a JSON for the information available in the below text. Include all information in the JSON.\n\n"""
-    llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.environ.get("OPENAI_API_KEY"))
+    system_prompt = """Create a JSON for the information available in the below text. Include all information in the JSON.\n\n
+    Adhere to the following JSON structure:
+{
+  "patient": {
+    "name": "May Day",
+    "date": "9/3/2024",
+    "telephone": "204.900.6666",
+    "physician": {
+      "name": "John Doe",
+      "phone": "555.666.7777"
+    },
+    "height": "150 inches",
+    "weight": "142 lbs",
+    "dob": "09/06/1979",
+    "age": "46 years"
+  },
+  "diet_recall": [
+    {
+      "time": "6 am",
+      "place": "Kitchen",
+      "items": [
+        {
+          "amount": "¾ cup",
+          "food_description": "Raisin Bran",
+          "notes": ""
+        },
+        {
+          "amount": "½ cup",
+          "food_description": "Mango juice",
+          "notes": ""
+        },
+        {
+          "amount": "1 medium",
+          "food_description": "Fresh apple",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "time": "12 pm",
+      "place": "Dining table",
+      "items": [
+        {
+          "amount": "½ cup",
+          "food_description": "Ground pork",
+          "notes": ""
+        },
+        {
+          "amount": "1 cup",
+          "food_description": "Cauliflower stew",
+          "notes": ""
+        },
+        {
+          "amount": "½ cup",
+          "food_description": "Rice",
+          "notes": ""
+        },
+        {
+          "amount": "¼ cup",
+          "food_description": "Green beans",
+          "notes": ""
+        },
+        {
+          "amount": "8 oz",
+          "food_description": "Water",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "time": "4 pm",
+      "place": "Kitchen",
+      "items": [
+        {
+          "amount": "½ cup",
+          "food_description": "Pretzels",
+          "notes": ""
+        },
+        {
+          "amount": "1 oz",
+          "food_description": "Chocolate",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "time": "7 pm",
+      "place": "Dining table",
+      "items": [
+        {
+          "amount": "1 cup",
+          "food_description": "Spaghetti",
+          "notes": ""
+        },
+        {
+          "amount": "½ cup",
+          "food_description": "Ground beef",
+          "notes": ""
+        },
+        {
+          "amount": "8 oz",
+          "food_description": "Water",
+          "notes": ""
+        }
+      ]
+    }
+  ]
+}
+    """
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=os.environ.get("OPENAI_API_KEY"))
     prompt = system_prompt + plaintxt
     result = llm.invoke(prompt).content
     content = str(result)
@@ -17,7 +125,115 @@ def get_json_plaintext(plaintxt):
 
 def get_json(pdf_file_path):
     json = ''
-    system_prompt = """Create a JSON for the information available in the document. Include all information in the JSON."""
+    system_prompt = """Create a JSON for the information available in the document. Include all information in the JSON.
+     Adhere to the following JSON structure:
+{
+  "patient": {
+    "name": "May Day",
+    "date": "9/3/2024",
+    "telephone": "204.900.6666",
+    "physician": {
+      "name": "John Doe",
+      "phone": "555.666.7777"
+    },
+    "height": "150 inches",
+    "weight": "142 lbs",
+    "dob": "09/06/1979",
+    "age": "46 years"
+  },
+  "diet_recall": [
+    {
+      "time": "6 am",
+      "place": "Kitchen",
+      "items": [
+        {
+          "amount": "¾ cup",
+          "food_description": "Raisin Bran",
+          "notes": ""
+        },
+        {
+          "amount": "½ cup",
+          "food_description": "Mango juice",
+          "notes": ""
+        },
+        {
+          "amount": "1 medium",
+          "food_description": "Fresh apple",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "time": "12 pm",
+      "place": "Dining table",
+      "items": [
+        {
+          "amount": "½ cup",
+          "food_description": "Ground pork",
+          "notes": ""
+        },
+        {
+          "amount": "1 cup",
+          "food_description": "Cauliflower stew",
+          "notes": ""
+        },
+        {
+          "amount": "½ cup",
+          "food_description": "Rice",
+          "notes": ""
+        },
+        {
+          "amount": "¼ cup",
+          "food_description": "Green beans",
+          "notes": ""
+        },
+        {
+          "amount": "8 oz",
+          "food_description": "Water",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "time": "4 pm",
+      "place": "Kitchen",
+      "items": [
+        {
+          "amount": "½ cup",
+          "food_description": "Pretzels",
+          "notes": ""
+        },
+        {
+          "amount": "1 oz",
+          "food_description": "Chocolate",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "time": "7 pm",
+      "place": "Dining table",
+      "items": [
+        {
+          "amount": "1 cup",
+          "food_description": "Spaghetti",
+          "notes": ""
+        },
+        {
+          "amount": "½ cup",
+          "food_description": "Ground beef",
+          "notes": ""
+        },
+        {
+          "amount": "8 oz",
+          "food_description": "Water",
+          "notes": ""
+        }
+      ]
+    }
+  ]
+}
+    """
     model="gpt-4o-mini"
     result = get_llm_response(pdf_file_path, model, system_prompt)
     content = str(result)
@@ -68,7 +284,7 @@ def get_llm_response(pdf_file_path, model, system_prompt):
     prompt = prompt.invoke({"context": docs_content, "question": system_prompt})
 
     # initialize the llm
-    llm = ChatOpenAI(model=model)
+    llm = ChatOpenAI(model=model, temperature=0)
 
     return llm.invoke(prompt)
 
@@ -86,29 +302,29 @@ def extract_json(text):
 # print(get_food_json(pdf_file_path))
 
 # To test plaintext
-# plaintext = '''Name: Jane Doe Date: 3/9/2025
-# Telephone: 214.920.9999
-# Physician: Sarah Connor
-# Physician phone: 888.777.6666
-# Height: 180 inches
-# Weight: 172 lbs
-# DOB: 09/09/1979
-# Age: 46 years
-# 24-hr Diet Recall
-# Time	Place	Amount	Food Description	Notes
-# 8 am	Kitchen	¾ cup	Raisin Bran	
-# 		½ cup	Apple juice	
-# 		1 medium	Fresh peach	
-# 12 pm	Dining table	½ cup	Ground beef	
-# 		1 cup	Mushroom stew	
-# 		½ cup	Rice	
-# 		¼ cup	Green beans	
-# 		8 oz	Water	
-# 4 pm	Kitchen	½ cup	Pretzels	
-# 		1 oz	Chocolate	
-# 7 pm	Dining table	1 cup	Spaghetti	
-# 		½ cup	Ground beef	
-# 		8 oz	Water	
+plaintext = '''Name: Jane Doe Date: 3/9/2025
+Telephone: 214.920.9999
+Physician: Sarah Connor
+Physician phone: 888.777.6666
+Height: 180 inches
+Weight: 172 lbs
+DOB: 09/09/1979
+Age: 46 years
+24-hr Diet Recall
+Time	Place	Amount	Food Description	Notes
+8 am	Kitchen	¾ cup	Raisin Bran	
+		½ cup	Apple juice	
+		1 medium	Fresh peach	
+12 pm	Dining table	½ cup	Ground beef	
+		1 cup	Mushroom stew	
+		½ cup	Rice	
+		¼ cup	Green beans	
+		8 oz	Water	
+4 pm	Kitchen	½ cup	Pretzels	
+		1 oz	Chocolate	
+7 pm	Dining table	1 cup	Spaghetti	
+		½ cup	Ground beef	
+		8 oz	Water	
 				
-# '''
-# print(get_json_plaintext(plaintext))
+'''
+print(get_json_plaintext(plaintext))
