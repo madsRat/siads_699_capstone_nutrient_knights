@@ -4,12 +4,9 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
-st.title("Robo Dietician")
-
-
 # initialize chat history
-system_prompt = '''You are an expert dietician. You respond to human diet related queries. Ask relevant counter questions to get additional information where necessary. 
-    Politely refuse to answer questions that are not related to human diet. Mention that you are an AI dietician and recommend user to review the responses with a 
+system_prompt = '''You are an expert dietitian. You respond to patient diet related queries. Ask relevant counter questions to get additional information where necessary. 
+    Politely refuse to answer questions that are not related to patient diet. Mention that you are an AI dietician and recommend user to review the responses with a 
     human expert. Use three sentences maximum and keep the answer concise.'''
     
 if "messages" not in st.session_state:
@@ -27,7 +24,7 @@ for message in st.session_state.messages:
             st.markdown(message.content)
 
 # create the bar where we can type messages
-prompt = st.chat_input("Ask me a question about human diet")
+prompt = st.chat_input("Ask me a question about patient diet")
 
 # did the user submit a prompt?
 if prompt:
