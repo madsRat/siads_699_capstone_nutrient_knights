@@ -1,3 +1,5 @@
+from datetime import time
+
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThreadPool, QThread, QRunnable
 
@@ -55,7 +57,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         print('COMPLETED: calculate_nutrition_needs')
 
     def start_rd_chatbot_thread(self):
-        worker = Worker_rd_chatbot()
+        worker = self.Worker_rd_chatbot()
         self.threadpool.start(worker)
         print('started thread.')
 
@@ -69,16 +71,34 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
 
-class Worker_rd_chatbot(QRunnable):
-    def __init__(self):
-        super().__init__()
-    @pyqtSlot()
-    def run(self):
-        # run streamlit RD chatbot
-        print('Initialiizing Robo_dietitian')
-        rd_chatbot = "python -m streamlit run robo_dietician.py --server.headless true" #
-        os.system(rd_chatbot)
-        print('Completed Robo_dietitian')
+    class Worker_rd_chatbot(QRunnable):
+        def __init__(self):
+            super().__init__()
+            # self.running = running
+        @pyqtSlot()
+        def run(self):
+
+            # run streamlit RD chatbot
+            print('Initialiizing Robo_dietitian')
+            # rd_chatbot = "python -m streamlit run robo_dietician.py --server.headless true"
+            # os.system(rd_chatbot)
+
+            import subprocess
+            process = subprocess.run(["python", "-m", "streamlit", "run", "robo_dietician.py", "--server.headless", "true"])
+
+            # # close chatbot when GUI closed
+            # while self.running:
+            #     import time
+            #     time.sleep(0.25)
+
+
+            print('Completed Robo_dietitian')
+
+    # def closeEvent(self):
+    #     print('Closing Robo_dietitian')
+    #     self.threadpool.terminate()
+    #     print('Closed Robo_dietitian')
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
