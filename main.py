@@ -7,6 +7,7 @@ from PyQt5.QtCore import *
 from aiohttp import worker
 
 from nutrient_analysis import Ui_main_window
+from GetJsonFromLlm import get_json_plaintext
 import sys
 import os
 
@@ -18,13 +19,47 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(4)
 
-        self.ui.pushButton_calculate.clicked.connect(self.start_rd_chatbot_thread)
+        # set default inputs for testing code
+        plain_text = """Name: Jane Doe Date: 3/9/2025
+                        Telephone: 214.920.9999
+                        Physician: Sarah Connor
+                        Physician phone: 888.777.6666
+                        Height: 180 inches
+                        Weight: 172 lbs
+                        DOB: 09/09/1979
+                        Age: 46 years
+                        24-hr Diet Recall
+                        Time	Place	Amount	Food Description	Notes
+                        8 am	Kitchen	¾ cup	Raisin Bran
+                                ½ cup	Apple juice
+                                1 medium	Fresh peach
+                        12 pm	Dining table	½ cup	Ground beef
+                                1 cup	Mushroom stew
+                                ½ cup	Rice
+                                ¼ cup	Green beans
+                                8 oz	Water
+                        4 pm	Kitchen	½ cup	Pretzels
+                                1 oz	Chocolate
+                        7 pm	Dining table	1 cup	Spaghetti
+                                ½ cup	Ground beef
+                                8 oz	Water"""
+        self.ui.plainTextEdit_dietary_recall.setPlainText(plain_text)
+
+        # define user inputs and responses in gui
+        self.ui.pushButton_calculate.clicked.connect(self.calculate_nutrition_needs)
+
+    def calculate_nutrition_needs(self):
+        print('STARTED: calculate_nutrition_needs')
+        json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
+        self.start_rd_chatbot_thread()
+        print('COMPLETED: calculate_nutrition_needs')
 
     def start_rd_chatbot_thread(self):
         worker = Worker_rd_chatbot()
         self.threadpool.start(worker)
         print('started thread.')
 
+        # allow streamlit (chatbot) thread to load before connecting to GUI
         import time
         time.sleep(0.5)
 
@@ -33,8 +68,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8501"))
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
-
-
 
 class Worker_rd_chatbot(QRunnable):
     def __init__(self):

@@ -97,6 +97,11 @@ class Ui_main_window(object):
         self.file_path_selected_pdf.setMaximumSize(QtCore.QSize(1000, 25))
         self.file_path_selected_pdf.setObjectName("file_path_selected_pdf")
         self.gridLayout.addWidget(self.file_path_selected_pdf, 4, 1, 1, 1)
+
+
+
+
+
         self.plainTextEdit_dietary_recall = QtWidgets.QPlainTextEdit(self.gridLayoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -107,12 +112,22 @@ class Ui_main_window(object):
         self.plainTextEdit_dietary_recall.setPlainText("")
         self.plainTextEdit_dietary_recall.setObjectName("plainTextEdit_dietary_recall")
         self.gridLayout.addWidget(self.plainTextEdit_dietary_recall, 2, 1, 1, 1)
+
+
+
+
+
         self.label_enter_patients_dietary_recall = QtWidgets.QLabel(self.tab_analysis)
         self.label_enter_patients_dietary_recall.setGeometry(QtCore.QRect(30, 10, 311, 16))
         font = QtGui.QFont()
         font.setPointSize(18)
         self.label_enter_patients_dietary_recall.setFont(font)
         self.label_enter_patients_dietary_recall.setObjectName("label_enter_patients_dietary_recall")
+
+
+
+
+
         self.pushButton_calculate = QtWidgets.QPushButton(self.tab_analysis)
         self.pushButton_calculate.setGeometry(QtCore.QRect(380, 590, 147, 36))
         self.pushButton_calculate.setAutoFillBackground(False)
@@ -123,6 +138,11 @@ class Ui_main_window(object):
         font.setPointSize(18)
         self.label_calculate_patients_dietary_recall.setFont(font)
         self.label_calculate_patients_dietary_recall.setObjectName("label_calculate_patients_dietary_recall")
+
+
+
+
+
         self.label_enter_patients_dietary_recall_2 = QtWidgets.QLabel(self.tab_analysis)
         self.label_enter_patients_dietary_recall_2.setGeometry(QtCore.QRect(50, 40, 271, 16))
         font = QtGui.QFont()
