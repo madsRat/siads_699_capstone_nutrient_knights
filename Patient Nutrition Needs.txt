@@ -1,0 +1,45 @@
+Patient Nutrition Needs	
+Estimated Daily Caloric Needs	3,063 kcal/day
+Macronutrient	Recommended Intake Per Day
+Carbohydrate	345 - 498 grams 
+Total Fiber	43 grams
+Protein	60 grams
+Fat	68 - 119 grams 
+Saturated fatty acids	low as possible
+Trans fatty acids	low as possible
+α-Linolenic Acid	1.6 grams 
+Linoleic Acid	17 grams
+Dietary Cholesterol	low as possible
+Total Water	3.7 liters (about 16 cups)
+Vitamin	Recommended Intake Per Day
+Vitamin A	900 mcg
+Vitamin C	90 mg
+Vitamin D	15 mcg
+Vitamin B6	1.3 mg
+Vitamin E	15 mg
+Vitamin K	120 mcg
+Thiamin	1.2 mg
+Vitamin B12	2.4 mcg
+Riboflavin	1.3 mg
+Folate	400 mcg
+Niacin	16 mg
+Choline	0.55 g
+Pantothenic Acid	5 mg
+Biotin	30 mcg
+Carotenoids	NANot Available
+Mineral	Recommended Intake Per Day
+Calcium	1,000 mg
+Chloride	2.3 g
+Chromium	35 mcg
+Copper	900 mcg
+Fluoride	4 mg
+Iodine	150 mcg
+Iron	8 mg
+Magnesium	400 mg
+Manganese	2.3 mg
+Molybdenum	45 mcg
+Phosphorus	0.7 g
+Potassium	3,400 mg
+Selenium	55 mcg
+Sodium	1,500 mg
+Zinc	11 mg
