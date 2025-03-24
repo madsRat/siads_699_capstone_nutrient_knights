@@ -22,7 +22,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.threadpool.setMaxThreadCount(4)
 
         # set default inputs for testing code
-        plain_text = """Name: Jane Doe Date: 3/9/2025
+        plain_text = """Name: Jane Doe 
+                        Date: 3/9/2025
                         Telephone: 214.920.9999
                         Physician: Sarah Connor
                         Physician phone: 888.777.6666
@@ -30,6 +31,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                         Weight: 172 lbs
                         DOB: 09/09/1979
                         Age: 46 years
+                        Sex: Female
+                        Activity Level: Active
+                        
                         24-hr Diet Recall
                         Time	Place	Amount	Food Description	Notes
                         8 am	Kitchen	¾ cup	Raisin Bran
@@ -46,15 +50,58 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                                 ½ cup	Ground beef
                                 8 oz	Water"""
         self.ui.plainTextEdit_dietary_recall.setPlainText(plain_text)
+        self.output_json_str = None # LLM output from user input
 
         # define user inputs and responses in gui
         self.ui.pushButton_calculate.clicked.connect(self.calculate_nutrition_needs)
 
     def calculate_nutrition_needs(self):
         print('STARTED: calculate_nutrition_needs')
-        json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
         self.start_rd_chatbot_thread()
+        self.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
+
+        # run DRI calcualations once LLM process is complete.
+        self.DRI_calculator()
         print('COMPLETED: calculate_nutrition_needs')
+
+    def DRI_calculator(self):
+        print('STARTED: DRI_calculator')
+        import json
+        llm_output_dict = json.loads(self.output_json_str)
+        print('llm_output_dict:', llm_output_dict)
+
+        age = llm_output_dict['patient']['age']
+        weight = llm_output_dict['patient']['weight']
+        height = llm_output_dict['patient']['height']
+        sex = llm_output_dict['patient']['sex'].lower()
+        activity_level = llm_output_dict['patient']['activity level'].lower()
+
+        # # feed in fake data
+        # age = 30 # years
+        # weight = 160 # lbs
+        # height = 72 # inches
+        # sex = 'male'
+        # activity_level = 'Active'
+
+        print('sex', sex)
+        print('age:', age)
+        print('weight:', weight)
+        print('height:', height)
+        print('activity_level:', activity_level)
+        print('\n')
+
+        import pandas as pd
+        if sex == 'male':
+            df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='male')
+        if sex == 'female':
+            df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='female')
+
+        print('Loaded', sex, 'dataset.')
+        print(df)
+
+
+
+        print('COMPLETED: DRI_calculator')
 
     def start_rd_chatbot_thread(self):
         worker = self.Worker_rd_chatbot()
@@ -85,20 +132,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
             import subprocess
             process = subprocess.run(["python", "-m", "streamlit", "run", "robo_dietician.py", "--server.headless", "true"])
-
             # # close chatbot when GUI closed
             # while self.running:
             #     import time
             #     time.sleep(0.25)
-
-
             print('Completed Robo_dietitian')
 
     # def closeEvent(self):
     #     print('Closing Robo_dietitian')
     #     self.threadpool.terminate()
     #     print('Closed Robo_dietitian')
-
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
