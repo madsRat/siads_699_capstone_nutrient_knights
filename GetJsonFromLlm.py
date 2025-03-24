@@ -3,7 +3,8 @@ def get_json_plaintext(plaintxt):
     import os
     from langchain import hub
     from langchain_openai import ChatOpenAI
-    
+    import os
+
     json = ''
     system_prompt = """Create a JSON for the information available in the below text. Include all information in the JSON.\n\n
     Adhere to the following JSON structure:
@@ -19,7 +20,9 @@ def get_json_plaintext(plaintxt):
     "height": "150 inches",
     "weight": "142 lbs",
     "dob": "09/06/1979",
-    "age": "46 years"
+    "age": "46 years",
+    "sex": "Female",
+    "activity level": "Active"
   },
   "diet_recall": [
     {
