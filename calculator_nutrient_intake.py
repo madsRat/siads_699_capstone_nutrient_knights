@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 import json
+from pathlib import Path
 
 
 def create_nutrient_table(llm_output_json):
@@ -73,8 +74,10 @@ def create_nutrient_table(llm_output_json):
     # Create DataFrame
     df = pd.DataFrame(nutrient_data).T
     df.index.name = "Nutrition"
-    df.to_csv("nutrition_table.csv")
-    df
+
+    # export table to results directory
+    filepath = Path(r"results/nutrition_table.csv")
+    df.to_csv(filepath)
     return None
 
 def separate_units_from_table(nutrition_table):
@@ -115,8 +118,9 @@ def separate_units_from_table(nutrition_table):
         df[col] = df[col].astype(str).str.extract(r"([-+]?\d*\.\d+|\d+)")[0]
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df.to_csv("food_nutrition_table.csv")
-    df
+    # export table to results directory
+    filepath = Path(r"results/food_nutrition_table.csv")
+    df.to_csv(filepath)
     return None
 
 def extract_intake_amounts(llm_output_json):
@@ -200,8 +204,10 @@ def extract_intake_amounts(llm_output_json):
 
     # Group and sum by food
     df_food_summary = df_clean.groupby("food", as_index=False)["amount_in_ml_or_g"].sum()
-    df_food_summary.to_csv("food_summary.csv")
-    df_food_summary
+
+    # export table to results directory
+    filepath = Path(r"results/food_summary.csv")
+    df_food_summary.to_csv(filepath)
     return None
 
 def tally_nutrients(food_summary_table, food_nutrition_table):
@@ -242,9 +248,10 @@ def tally_nutrients(food_summary_table, food_nutrition_table):
     df_nutrition_summary = df_nutrition_summary.join(unit_column)
     # add water back to nutrition list
     df_nutrition_summary.loc["Water"] = [water_amount / 1000, "liters"]
-    # save to csv file
-    df_nutrition_summary.to_csv("nutrition_total_intake.csv")
-    df_nutrition_summary
+
+    # export table to results directory
+    filepath = Path(r"results/nutrition_total_intake.csv")
+    df_nutrition_summary.to_csv(filepath)
     return None
 
 def get_patient_nutrient_needs(patient_nutrient_needs):
@@ -302,8 +309,10 @@ def get_patient_nutrient_needs(patient_nutrient_needs):
 
     # Create the cleaned DataFrame
     df_final = pd.DataFrame(data, columns=['Nutrition', 'Category', 'Need_Amount', 'Need_Unit'])
-    df_final.to_csv("nutrition_total_needs.csv")
-    df_final
+
+    # export table to results directory
+    filepath = Path(r"results/nutrition_total_needs.csv")
+    df_final.to_csv(filepath)
     return None
 
 def create_mapped_nutrient_table():
@@ -370,10 +379,9 @@ def create_mapped_nutrient_table():
         for nutrient in ordered_need_nutrition
     ], columns=["Need_Nutrition", "Intake_Nutrition"])
 
-    # Save to CSV
-    ordered_csv_path = "Ordered_Mapped_Nutrients.csv"
-    ordered_df.to_csv(ordered_csv_path, index=False)
-    ordered_df
+    # export table to results directory
+    filepath = Path(r"results/Ordered_Mapped_Nutrients.csv")
+    ordered_df.to_csv(filepath, index=False)
     return None
 
 def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, ordered_mapped_nutrients):
@@ -400,9 +408,9 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     merged_df[numeric_cols] = merged_df[numeric_cols].round(1)
     merged_df = merged_df.rename(columns={"Amount": "Intake_Amount"})
 
-    # Save the final merged CSV
-    final_merged_path = "Nutrition_Intake_vs_Needs.csv"
-    merged_df.to_csv(final_merged_path, index=False)
+    # export table to results directory
+    filepath = Path(r"results/Nutrition_Intake_vs_Needs.csv")
+    merged_df.to_csv(filepath, index=False)
 
     merged_df
     return None
@@ -418,17 +426,18 @@ def calculate_nutrient_intake_and_compare(patient_intake, nutrition_table, food_
 
     get_patient_nutrient_needs(patient_nutrient_needs)
 
+    # prepare final table
     create_mapped_nutrient_table()
     create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, ordered_mapped_nutrients)
     return None
 
 calculate_nutrient_intake_and_compare("Intake.txt",
-                                      "nutrition_table.csv",
-                                      "food_summary.csv",
-                                    "food_nutrition_table.csv",
+                                      "results/nutrition_table.csv",
+                                      "results/food_summary.csv",
+                                    "results/food_nutrition_table.csv",
                                     "Patient Nutrition Needs.txt",
-                                    "nutrition_total_intake.csv",
-                                    "nutrition_total_needs.csv",
-                                    "Ordered_Mapped_Nutrients.csv"
+                                    "results/nutrition_total_intake.csv",
+                                    "results/nutrition_total_needs.csv",
+                                    "results/Ordered_Mapped_Nutrients.csv"
                                       )
 print("Complete")
