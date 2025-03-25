@@ -114,16 +114,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         print('STARTED: start_llm_parser_thread')
 
     def start_rd_chatbot_thread(self):
-        worker = self.Worker_rd_chatbot()
+        worker = self.Worker_rd_chatbot(self.ui)
         self.threadpool.start(worker)
 
-        # allow streamlit (chatbot) thread to load before connecting to GUI
+        #allow streamlit (chatbot) thread to load before connecting to GUI
         import time
         time.sleep(0.5)
 
         print('Loading chatbot into gui.')
         from PyQt5.QtCore import QUrl
-        self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8501"))
+        self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8515"))
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
 
@@ -135,12 +135,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         def run(self):
             print('STARTED: Worker_llm_parser')
             self.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
+            print('self.output_json_str:  \n', self.output_json_str)
             print('COMPLETED: Worker_llm_parser')
 
     class Worker_rd_chatbot(QRunnable):
-        def __init__(self):
+        def __init__(self, ui):
             super().__init__()
-            # self.running = running
+            self.ui = ui
         @pyqtSlot()
         def run(self):
 
@@ -150,11 +151,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             # os.system(rd_chatbot)
 
             import subprocess
-            process = subprocess.run(["python", "-m", "streamlit", "run", "robo_dietician.py", "--server.headless", "true"])
-            # # close chatbot when GUI closed
-            # while self.running:
-            #     import time
-            #     time.sleep(0.25)
+            # cmd_string = "python -m streamlit run robo_dietician.py --theme.base='dark' --server.headless=true"
+            # process = subprocess.run(cmd_string, shell=True)
+            process = subprocess.run(
+                ["python", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true",
+                 "--server.port=8515"],)
+
             print('COMPLETED: Robo_dietitian')
 
     # def closeEvent(self):
