@@ -407,15 +407,28 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     merged_df
     return None
 
+def calculate_nutrient_intake_and_compare(patient_intake, nutrition_table, food_summary, food_nutrition_table,
+                                          patient_nutrient_needs, nutrition_total_intake, nutrition_total_needs,
+                                          ordered_mapped_nutrients):
+    # chain all functions above and create nutrient intake vs needs table.
+    create_nutrient_table(patient_intake)
+    separate_units_from_table(nutrition_table)
+    extract_intake_amounts(patient_intake)
+    tally_nutrients(food_summary, food_nutrition_table)
 
-create_nutrient_table("Intake.txt")
-separate_units_from_table("nutrition_table.csv")
+    get_patient_nutrient_needs(patient_nutrient_needs)
 
-extract_intake_amounts("Intake.txt")
-tally_nutrients("food_summary.csv", "food_nutrition_table.csv")
-get_patient_nutrient_needs("Patient Nutrition Needs.txt")
-create_mapped_nutrient_table()
-create_intake_vs_needs_table("nutrition_total_intake.csv", "nutrition_total_needs.csv",
-                             "Ordered_Mapped_Nutrients.csv")
+    create_mapped_nutrient_table()
+    create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, ordered_mapped_nutrients)
+    return None
 
+calculate_nutrient_intake_and_compare("Intake.txt",
+                                      "nutrition_table.csv",
+                                      "food_summary.csv",
+                                    "food_nutrition_table.csv",
+                                    "Patient Nutrition Needs.txt",
+                                    "nutrition_total_intake.csv",
+                                    "nutrition_total_needs.csv",
+                                    "Ordered_Mapped_Nutrients.csv"
+                                      )
 print("Complete")
