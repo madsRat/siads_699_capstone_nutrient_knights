@@ -415,29 +415,20 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     merged_df
     return None
 
-def calculate_nutrient_intake_and_compare(patient_intake, nutrition_table, food_summary, food_nutrition_table,
-                                          patient_nutrient_needs, nutrition_total_intake, nutrition_total_needs,
-                                          ordered_mapped_nutrients):
+def calculate_nutrient_intake_and_compare(patient_intake, patient_nutrient_needs):
     # chain all functions above and create nutrient intake vs needs table.
     create_nutrient_table(patient_intake)
-    separate_units_from_table(nutrition_table)
+    separate_units_from_table("results/nutrition_table.csv")
     extract_intake_amounts(patient_intake)
-    tally_nutrients(food_summary, food_nutrition_table)
+    tally_nutrients("results/food_summary.csv", "results/food_nutrition_table.csv")
 
     get_patient_nutrient_needs(patient_nutrient_needs)
 
     # prepare final table
     create_mapped_nutrient_table()
-    create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, ordered_mapped_nutrients)
+    create_intake_vs_needs_table("results/nutrition_total_intake.csv", "results/nutrition_total_needs.csv", "results/Ordered_Mapped_Nutrients.csv")
+    print('Completed Nutrient Calculator.')
     return None
 
-calculate_nutrient_intake_and_compare("Intake.txt",
-                                      "results/nutrition_table.csv",
-                                      "results/food_summary.csv",
-                                    "results/food_nutrition_table.csv",
-                                    "Patient Nutrition Needs.txt",
-                                    "results/nutrition_total_intake.csv",
-                                    "results/nutrition_total_needs.csv",
-                                    "results/Ordered_Mapped_Nutrients.csv"
-                                      )
-print("Complete")
+# calculate_nutrient_intake_and_compare("Intake.txt","Patient Nutrition Needs.txt")
+# print("Complete")

@@ -10,6 +10,8 @@ from aiohttp import worker
 
 from nutrient_analysis import Ui_main_window
 from GetJsonFromLlm import get_json_plaintext
+from calculator_nutrient_intake import calculate_nutrient_intake_and_compare
+
 import sys
 import os
 
@@ -57,11 +59,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def calculate_nutrition_needs(self):
         print('STARTED: calculate_nutrition_needs')
+
+        # Step 1: Intialize RD Chatbot.
         self.start_rd_chatbot_thread()
+
+        # Step 2: Extract data from RD Inputs.
         self.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
 
-        # run DRI calcualations once LLM process is complete.
-        self.DRI_calculator()
+        # Step 3: Run Nutrition Calculators
+        # self.DRI_calculator()
+        calculate_nutrient_intake_and_compare("Intake.txt","Patient Nutrition Needs.txt")
+
         print('COMPLETED: calculate_nutrition_needs')
 
     def DRI_calculator(self):
