@@ -78,7 +78,6 @@ def create_nutrient_table(llm_output_json):
     # export table to results directory
     filepath = Path(r"results/nutrition_table.csv")
     df.to_csv(filepath)
-    return None
 
 def separate_units_from_table(nutrition_table):
     # seperate unit and amount for nutrition_table
@@ -121,7 +120,6 @@ def separate_units_from_table(nutrition_table):
     # export table to results directory
     filepath = Path(r"results/food_nutrition_table.csv")
     df.to_csv(filepath)
-    return None
 
 def extract_intake_amounts(llm_output_json):
     # load food intake json file again to get food intake, convert unit to ml or g
@@ -208,7 +206,6 @@ def extract_intake_amounts(llm_output_json):
     # export table to results directory
     filepath = Path(r"results/food_summary.csv")
     df_food_summary.to_csv(filepath)
-    return None
 
 def tally_nutrients(food_summary_table, food_nutrition_table):
     # Sum nutrition
@@ -252,7 +249,6 @@ def tally_nutrients(food_summary_table, food_nutrition_table):
     # export table to results directory
     filepath = Path(r"results/nutrition_total_intake.csv")
     df_nutrition_summary.to_csv(filepath)
-    return None
 
 def get_patient_nutrient_needs(patient_nutrient_needs):
     # Re-import required libraries due to code execution state reset
@@ -313,7 +309,6 @@ def get_patient_nutrient_needs(patient_nutrient_needs):
     # export table to results directory
     filepath = Path(r"results/nutrition_total_needs.csv")
     df_final.to_csv(filepath)
-    return None
 
 def create_mapped_nutrient_table():
     # Define the ordered Need_Nutrition list
@@ -382,7 +377,6 @@ def create_mapped_nutrient_table():
     # export table to results directory
     filepath = Path(r"results/Ordered_Mapped_Nutrients.csv")
     ordered_df.to_csv(filepath, index=False)
-    return None
 
 def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, ordered_mapped_nutrients):
     # Load the uploaded CSV files
@@ -412,23 +406,19 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     filepath = Path(r"results/Nutrition_Intake_vs_Needs.csv")
     merged_df.to_csv(filepath, index=False)
 
-    merged_df
-    return None
-
-def calculate_nutrient_intake_and_compare(patient_intake, patient_nutrient_needs):
-    # chain all functions above and create nutrient intake vs needs table.
+def calculate_nutrient_intake(patient_intake):
+    # chain all functions above and create nutrient intake table
     create_nutrient_table(patient_intake)
     separate_units_from_table("results/nutrition_table.csv")
     extract_intake_amounts(patient_intake)
     tally_nutrients("results/food_summary.csv", "results/food_nutrition_table.csv")
 
+def compare_nutrient_intake_and_needs(patient_nutrient_needs):
     get_patient_nutrient_needs(patient_nutrient_needs)
 
     # prepare final table
     create_mapped_nutrient_table()
     create_intake_vs_needs_table("results/nutrition_total_intake.csv", "results/nutrition_total_needs.csv", "results/Ordered_Mapped_Nutrients.csv")
-    print('Completed Nutrient Calculator.')
-    return None
 
 # calculate_nutrient_intake_and_compare("Intake.txt","Patient Nutrition Needs.txt")
 # print("Complete")

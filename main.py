@@ -10,7 +10,7 @@ from aiohttp import worker
 
 from nutrient_analysis import Ui_main_window
 from GetJsonFromLlm import get_json_plaintext
-from calculator_nutrient_intake import calculate_nutrient_intake_and_compare
+from calculator_nutrient_intake import calculate_nutrient_intake, compare_nutrient_intake_and_needs
 
 import sys
 import os
@@ -56,6 +56,19 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # define user inputs and responses in gui
         self.ui.pushButton_calculate.clicked.connect(self.calculate_nutrition_needs)
+        self.ui.tabWidget.tabBarClicked.connect(self.tab_results)
+
+    def tab_results(self):
+
+        # LLM parsed data
+        print('self.output_json_str:  \n', self.output_json_str)
+
+        # Wei code output available as csv in results directory
+
+        # TODO Complete calculator_nutrient_needs.py
+        # TODO calculator_nutrient_needs.py output goes into Wei's compare_nutrient_intake_needs() function.
+
+
 
     def calculate_nutrition_needs(self):
         print('STARTED: calculate push button')
@@ -68,7 +81,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # Step 3: Run Nutrition Calculators
         # self.DRI_calculator()
-        # calculate_nutrient_intake_and_compare("Intake.txt","Patient Nutrition Needs.txt")
+        self.start_nutrient_intake_calculator_thread()
 
         print('COMPLETED: calculate push button')
 
@@ -108,13 +121,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         print(df)
         print('COMPLETED: DRI_calculator')
 
+    def start_nutrient_intake_calculator_thread(self):
+        worker = self.Worker_nutrient_intake_calculator()
+        self.threadpool.start(worker)
+        print('STARTED: nutrient intake calculator thread')
+
     def start_llm_parser_thread(self):
-        worker = self.Worker_llm_parser(self.ui)
+        worker = self.Worker_llm_parser(self, self.ui)
         self.threadpool.start(worker)
         print('STARTED: start_llm_parser_thread')
 
     def start_rd_chatbot_thread(self):
-        worker = self.Worker_rd_chatbot(self.ui)
+        worker = self.Worker_rd_chatbot()
         self.threadpool.start(worker)
 
         #allow streamlit (chatbot) thread to load before connecting to GUI
@@ -127,21 +145,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
 
-    class Worker_llm_parser(QRunnable):
-        def __init__(self, ui):
+    class Worker_nutrient_intake_calculator(QRunnable):
+        def __init__(self):
             super().__init__()
+        @pyqtSlot()
+        def run(self):
+            print('STARTED: nutrient intake calculator')
+            calculate_nutrient_intake("Intake.txt")
+            print('COMPLETED: nutrient intake calculator')
+
+    class Worker_llm_parser(QRunnable):
+        def __init__(self, main, ui):
+            super().__init__()
+            self.main = main
             self.ui = ui
         @pyqtSlot()
         def run(self):
             print('STARTED: Worker_llm_parser')
-            self.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
-            print('self.output_json_str:  \n', self.output_json_str)
+            # pass output back to man gui.
+            self.main.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
             print('COMPLETED: Worker_llm_parser')
 
     class Worker_rd_chatbot(QRunnable):
-        def __init__(self, ui):
+        def __init__(self):
             super().__init__()
-            self.ui = ui
         @pyqtSlot()
         def run(self):
 
