@@ -58,19 +58,19 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.pushButton_calculate.clicked.connect(self.calculate_nutrition_needs)
 
     def calculate_nutrition_needs(self):
-        print('STARTED: calculate_nutrition_needs')
+        print('STARTED: calculate push button')
 
         # Step 1: Intialize RD Chatbot.
         self.start_rd_chatbot_thread()
 
         # Step 2: Extract data from RD Inputs.
-        self.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
+        self.start_llm_parser_thread()
 
         # Step 3: Run Nutrition Calculators
         # self.DRI_calculator()
-        calculate_nutrient_intake_and_compare("Intake.txt","Patient Nutrition Needs.txt")
+        # calculate_nutrient_intake_and_compare("Intake.txt","Patient Nutrition Needs.txt")
 
-        print('COMPLETED: calculate_nutrition_needs')
+        print('COMPLETED: calculate push button')
 
     def DRI_calculator(self):
         print('STARTED: DRI_calculator')
@@ -106,15 +106,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         print('Loaded', sex, 'dataset.')
         print(df)
-
-
-
         print('COMPLETED: DRI_calculator')
+
+    def start_llm_parser_thread(self):
+        worker = self.Worker_llm_parser(self.ui)
+        self.threadpool.start(worker)
+        print('STARTED: start_llm_parser_thread')
 
     def start_rd_chatbot_thread(self):
         worker = self.Worker_rd_chatbot()
         self.threadpool.start(worker)
-        print('started thread.')
 
         # allow streamlit (chatbot) thread to load before connecting to GUI
         import time
@@ -126,6 +127,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
 
+    class Worker_llm_parser(QRunnable):
+        def __init__(self, ui):
+            super().__init__()
+            self.ui = ui
+        @pyqtSlot()
+        def run(self):
+            print('STARTED: Worker_llm_parser')
+            self.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
+            print('COMPLETED: Worker_llm_parser')
+
     class Worker_rd_chatbot(QRunnable):
         def __init__(self):
             super().__init__()
@@ -134,7 +145,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         def run(self):
 
             # run streamlit RD chatbot
-            print('Initialiizing Robo_dietitian')
+            print('STARTED: Robo_dietitian')
             # rd_chatbot = "python -m streamlit run robo_dietician.py --server.headless true"
             # os.system(rd_chatbot)
 
@@ -144,7 +155,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             # while self.running:
             #     import time
             #     time.sleep(0.25)
-            print('Completed Robo_dietitian')
+            print('COMPLETED: Robo_dietitian')
 
     # def closeEvent(self):
     #     print('Closing Robo_dietitian')
