@@ -58,7 +58,6 @@ def preprocess_anthropometrics():
         "years": (1, "years"),  # years
         "y": (1, "years"),  # years
         "months": (12, "years"),  # years
-
     }
 
     # anthropometrics = [sex, age, weight, height, activity_level]
@@ -158,9 +157,28 @@ def calculate_patient_needs(patient_info):
     print('Loaded', patient_info['sex'], 'dataset.')
     print(df)
 
-    # Compute Basal Metabolic Rate
-    bmr = basal_metabolic_rate(patient_info, df)
-    print('Basal Metabolic Rate:', bmr)
+    interval = list(df['age']) + [150]
+    print('interval', interval)
+    # establish interval index for age ranges
+    intervals = pd.IntervalIndex.from_breaks(interval, closed='left')
+    print(intervals)
+
+    # assign index
+    df = df.set_index(intervals)
+    print(df.head())
+    print(df.loc[1.9999])
+
+    # # Compute Basal Metabolic Rate (BMR)
+    # bmr = basal_metabolic_rate(patient_info, df)
+    # print('Basal Metabolic Rate:', bmr)
+    #
+    # # Compute Protein Needs based on BMR
+
+
+
+
+
+
 
 patient_info = preprocess_anthropometrics()
 calculate_patient_needs(patient_info)
