@@ -15,13 +15,13 @@ def parse_amount_unit(value):
         print('parse_amount_unit: value is None.')
     return val, unit
 
-def calculate_patient_needs():
+def preprocess_anthropometrics():
 
     # feed in fake data
     sex = 'male'
     age = '30 years'  # years
     weight = '160 lbs'  # lbs
-    height = "5' 11" #'72 inches'  # inches
+    height = "5' 11" #'72 inches' # inches
     activity_level = 'active'
 
     # unit conversions to metric for DRI calculations
@@ -61,12 +61,17 @@ def calculate_patient_needs():
 
     }
 
-    anthropometrics = [sex, age, weight, height, activity_level]
-    anthro_amount_units = []
+    # anthropometrics = [sex, age, weight, height, activity_level]
+    # anthro_amount_units = []
+
+    anthropometrics = {'sex': sex,
+                       'age': age,
+                       'weight': weight,
+                       'height': height,
+                       'activity_level': activity_level}
 
     # split units from values
-    for metric in anthropometrics:
-        print('metric:', metric)
+    for key, metric in anthropometrics.items():
 
         # check if 5' 11" notation is used and convert to cm
         if "'" in metric:
@@ -86,25 +91,12 @@ def calculate_patient_needs():
             val = round(float(val) * factor, 2)
             unit = target_unit
 
-        anthro_amount_units.append([val, unit])
+        # anthro_amount_units.append([val, unit])
+        anthropometrics[key] = ([val, unit])
 
-    print(anthro_amount_units)
-    df = pd.DataFrame(anthro_amount_units, columns=['value', 'unit'])
-    print(df)
+    return anthropometrics
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # def calculate_patient_needs():
 
     # # print('sex', sex)
     # # print('age:', age)
@@ -134,4 +126,4 @@ def basal_metabolic_rate():
         'very active': 2.0,
     }
 
-calculate_patient_needs()
+preprocess_anthropometrics()
