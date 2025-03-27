@@ -150,29 +150,60 @@ def calculate_patient_needs(patient_info):
 
     # import DRI Tables
     if patient_info['sex'] == 'male':
-        df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='male')
+        dri_df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='male')
     if patient_info['sex']== 'female':
-        df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='female')
+        dri_df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='female')
 
     print('Loaded', patient_info['sex'], 'dataset.')
-    print(df)
+    print(dri_df)
 
-    interval = list(df['age']) + [150]
+    interval = list(dri_df['age']) + [150]
     print('interval', interval)
     # establish interval index for age ranges
     intervals = pd.IntervalIndex.from_breaks(interval, closed='left')
     print(intervals)
 
     # assign index
-    df = df.set_index(intervals)
-    print(df.head())
-    print(df.loc[1.9999])
+    dri_df = dri_df.set_index(intervals)
+    print(dri_df.head())
+    print(dri_df.loc[1.9999])
+    # print(dri_df['protein_g_kg_day'])
+    print('protein \n',dri_df.loc[patient_info['age']]['protein_g_kg_day'])
 
-    # # Compute Basal Metabolic Rate (BMR)
-    # bmr = basal_metabolic_rate(patient_info, df)
-    # print('Basal Metabolic Rate:', bmr)
-    #
-    # # Compute Protein Needs based on BMR
+    # Compute Basal Metabolic Rate (BMR)
+    bmr = basal_metabolic_rate(patient_info, dri_df)
+    print('Basal Metabolic Rate:', bmr)
+
+    # recommended protein = patient weight (kg) * protein table (by age)
+    protein = patient_info['weight'] * dri_df.loc[patient_info['age']]['protein_g_kg_day']
+
+    # Table 3 Energy Provided by Macronutrients (kcal/g)
+    energy_provided = {
+        'carbohydrate': 4,
+        'fat': 9,
+        'protein': 4,
+        'alcohol': 7,
+    }
+
+    # carbohydrates
+    carb_percentage_low = 0.45
+    carb_percentage_high = 0.65
+    carb_low = bmr * carb_percentage_low / energy_provided['carbohydrate']
+    carb_high = bmr * carb_percentage_high / energy_provided['carbohydrate']
+    carbohydrate = str(round(carb_low)) + '-' + str(round(carb_high))
+    print(carbohydrate)
+
+    # fiber
+    fiber = round(dri_df.loc[patient_info['age']]['fiber_g_kcal'] * bmr / 1000)
+    print(fiber)
+
+    # fat
+    fat_low = bmr * dri_df.loc[patient_info['age']]['fat_lowEnd_energy_percent'] / energy_provided['fat'] / 100
+    fat_high = bmr * dri_df.loc[patient_info['age']]['fat_highEnd_energy_percent'] / energy_provided['fat'] / 100
+    fat = str(round(fat_low)) + '-' + str(round(fat_high))
+    print(fat)
+
+    # alpha lenolic acid
 
 
 
