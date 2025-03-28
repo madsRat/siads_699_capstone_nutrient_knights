@@ -174,8 +174,10 @@ def calculate_patient_needs(patient_info):
     bmr = basal_metabolic_rate(patient_info, dri_df)
     print('Basal Metabolic Rate:', bmr)
 
+    age = patient_info['age']
+
     # recommended protein = patient weight (kg) * protein table (by age)
-    protein = patient_info['weight'] * dri_df.loc[patient_info['age']]['protein_g_kg_day']
+    protein = patient_info['weight'] * dri_df.loc[age]['protein_g_kg_day']
 
     # Table 3 Energy Provided by Macronutrients (kcal/g)
     energy_provided = {
@@ -194,16 +196,22 @@ def calculate_patient_needs(patient_info):
     print(carbohydrate)
 
     # fiber
-    fiber = round(dri_df.loc[patient_info['age']]['fiber_g_kcal'] * bmr / 1000)
+    fiber = round(dri_df.loc[age]['fiber_g_kcal'] * bmr / 1000)
     print(fiber)
 
     # fat
-    fat_low = bmr * dri_df.loc[patient_info['age']]['fat_lowEnd_energy_percent'] / energy_provided['fat'] / 100
-    fat_high = bmr * dri_df.loc[patient_info['age']]['fat_highEnd_energy_percent'] / energy_provided['fat'] / 100
+    fat_low = bmr * dri_df.loc[age]['fat_lowEnd_energy_percent'] / energy_provided['fat'] / 100
+    fat_high = bmr * dri_df.loc[age]['fat_highEnd_energy_percent'] / energy_provided['fat'] / 100
     fat = str(round(fat_low)) + '-' + str(round(fat_high))
     print(fat)
 
     # alpha lenolic acid
+    fat_alphaLenoic_acid = bmr * dri_df.loc[age]['fat_alphaLenolic_acid_energy_percent'] / energy_provided['fat'] / 100
+    print(fat_alphaLenoic_acid)
+
+    # lenolic acid
+    fat_lenolic_acid = bmr * dri_df.loc[age]['fat_lenolic_acid_energy_percent'] / energy_provided['fat'] / 100
+    print('fat_lenolic_acid: ', fat_lenolic_acid)
 
 
 
