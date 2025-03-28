@@ -213,9 +213,49 @@ def calculate_patient_needs(patient_info):
     fat_lenolic_acid = bmr * dri_df.loc[age]['fat_lenolic_acid_energy_percent'] / energy_provided['fat'] / 100
     print('fat_lenolic_acid: ', fat_lenolic_acid)
 
+    fat_cholesterol = 'As low as possible while consuming a nutritionally adequate diet'
+    fat_saturated_fatty_acids = 'As low as possible while consuming a nutritionally adequate diet'
+    fat_trans_fatty_acids = 'As low as possible while consuming a nutritionally adequate diet'
 
+    # macronutrients_table
+    macronutrient_names = ['Carbohydrate',
+                           'Total Fiber',
+                           'Protein',
+                           'Fat',
+                           'Saturated fatty acids',
+                           'Trans fatty acids',
+                           'alpha-linolenic acid',
+                           'Linoleic acid',
+                           'Cholesterol']
 
+    macronutrient_dri = [carbohydrate,
+                            fiber,
+                            protein,
+                            fat,
+                            fat_saturated_fatty_acids,
+                            fat_trans_fatty_acids,
+                            fat_alphaLenoic_acid,
+                            fat_lenolic_acid,
+                            fat_cholesterol]
 
+    macronutrient_intake = [0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0]
+
+    macronutrients = {'nutrient': macronutrient_names,
+                      'intake': macronutrient_intake,
+                      'DRI': macronutrient_dri}
+
+    df_macronutrients = pd.DataFrame(macronutrients)
+    print(df_macronutrients)
+
+    # TODO Create Essential Vitamin table
 
 
 
