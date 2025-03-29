@@ -191,7 +191,7 @@ class Ui_main_window(object):
 
 
         self.tableWidget_macronutrients = QtWidgets.QTableWidget(self.horizontalLayoutWidget)
-        self.tableWidget_macronutrients.setRowCount(9)
+        self.tableWidget_macronutrients.setRowCount(10)
         self.tableWidget_macronutrients.setColumnCount(3)
         self.tableWidget_macronutrients.setObjectName("tableWidget_macronutrients")
         item = QtWidgets.QTableWidgetItem()

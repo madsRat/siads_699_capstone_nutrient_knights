@@ -217,6 +217,8 @@ def calculate_patient_needs(patient_info):
     fat_saturated_fatty_acids = 'As low as possible while consuming a nutritionally adequate diet'
     fat_trans_fatty_acids = 'As low as possible while consuming a nutritionally adequate diet'
 
+    total_water = dri_df.loc[age]['total_water_liters']
+
     # macronutrients_table
     macronutrient_names = ['Carbohydrate',
                            'Total Fiber',
@@ -226,7 +228,8 @@ def calculate_patient_needs(patient_info):
                            'Trans fatty acids',
                            'alpha-linolenic acid',
                            'Linoleic acid',
-                           'Cholesterol']
+                           'Cholesterol',
+                           'Total Water']
 
     macronutrient_dri = [carbohydrate,
                             fiber,
@@ -236,9 +239,11 @@ def calculate_patient_needs(patient_info):
                             fat_trans_fatty_acids,
                             fat_alphaLenoic_acid,
                             fat_lenolic_acid,
-                            fat_cholesterol]
+                            fat_cholesterol,
+                            total_water]
 
     macronutrient_intake = [0,
+                            0,
                             0,
                             0,
                             0,
