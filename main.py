@@ -82,43 +82,52 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # Step 3: Run Nutrition Calculators
         self.start_DRI_calculator_thread()
-        self.start_nutrient_intake_calculator_thread()
+        # self.start_nutrient_intake_calculator_thread()
 
 
         print('COMPLETED: calculate push button')
 
     def DRI_calculator(self):
 
+        # compute DRI, patient nutrition needs
         patient_info = preprocess_anthropometrics()
-        df_macronutrients, df_vitamins, df_essential_minerals = calculate_patient_needs(patient_info)
+        result_dri_df = calculate_patient_needs(patient_info)
 
-        # Set Table for Macronutrients in GUI
-        for row in range(df_macronutrients.shape[0]):
-            for col in range(df_macronutrients.shape[1]):
-                item = QTableWidgetItem(str(df_macronutrients.iloc[row, col]))
-                self.ui.tableWidget_macronutrients.setItem(row, col, item)
+        # compute nutrition intake
+        # AND create nutrition tables in results directory
+        calculate_nutrient_intake("Intake.txt")
+        compare_nutrient_intake_and_needs(result_dri_df)
+        print('DRI and intake calculations completed')
 
-        # Set Table for Vitamins in GUI
-        for row in range(df_vitamins.shape[0]):
-            for col in range(df_vitamins.shape[1]):
-                item = QTableWidgetItem(str(df_vitamins.iloc[row, col]))
-                self.ui.tableWidget_micronutrients.setItem(row, col, item)
 
-        # Set Table for Essential Minerals in GUI
-        for row in range(df_essential_minerals.shape[0]):
-            for col in range(df_essential_minerals.shape[1]):
-                item = QTableWidgetItem(str(df_essential_minerals.iloc[row, col]))
-                self.ui.tableWidget_essential_minerals.setItem(row, col, item)
+
+        # # Set Table for Macronutrients in GUI
+        # for row in range(df_macronutrients.shape[0]):
+        #     for col in range(df_macronutrients.shape[1]):
+        #         item = QTableWidgetItem(str(df_macronutrients.iloc[row, col]))
+        #         self.ui.tableWidget_macronutrients.setItem(row, col, item)
+        #
+        # # Set Table for Vitamins in GUI
+        # for row in range(df_vitamins.shape[0]):
+        #     for col in range(df_vitamins.shape[1]):
+        #         item = QTableWidgetItem(str(df_vitamins.iloc[row, col]))
+        #         self.ui.tableWidget_micronutrients.setItem(row, col, item)
+        #
+        # # Set Table for Essential Minerals in GUI
+        # for row in range(df_essential_minerals.shape[0]):
+        #     for col in range(df_essential_minerals.shape[1]):
+        #         item = QTableWidgetItem(str(df_essential_minerals.iloc[row, col]))
+        #         self.ui.tableWidget_essential_minerals.setItem(row, col, item)
 
     def start_DRI_calculator_thread(self):
         worker = self.Worker_DRI_calculator(self, self.ui)
         self.threadpool.start(worker)
         print('DRI calculator thread started')
 
-    def start_nutrient_intake_calculator_thread(self):
-        worker = self.Worker_nutrient_intake_calculator()
-        self.threadpool.start(worker)
-        print('STARTED: nutrient intake calculator thread')
+    # def start_nutrient_intake_calculator_thread(self):
+    #     worker = self.Worker_nutrient_intake_calculator()
+    #     self.threadpool.start(worker)
+    #     print('STARTED: nutrient intake calculator thread')
 
     def start_llm_parser_thread(self):
         worker = self.Worker_llm_parser(self, self.ui)
@@ -149,14 +158,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             print('STARTED: DRI calculator')
             self.main.DRI_calculator()
 
-    class Worker_nutrient_intake_calculator(QRunnable):
-        def __init__(self):
-            super().__init__()
-        @pyqtSlot()
-        def run(self):
-            print('STARTED: nutrient intake calculator')
-            calculate_nutrient_intake("Intake.txt")
-            print('COMPLETED: nutrient intake calculator')
+    # class Worker_nutrient_intake_calculator(QRunnable):
+    #     def __init__(self):
+    #         super().__init__()
+    #     @pyqtSlot()
+    #     def run(self):
+    #         print('STARTED: nutrient intake calculator')
+    #         calculate_nutrient_intake("Intake.txt")
+    #         print('COMPLETED: nutrient intake calculator')
 
     class Worker_llm_parser(QRunnable):
         def __init__(self, main, ui):

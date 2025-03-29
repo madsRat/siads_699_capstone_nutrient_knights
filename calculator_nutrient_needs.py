@@ -165,10 +165,6 @@ def calculate_patient_needs(patient_info):
 
     # assign index
     dri_df = dri_df.set_index(intervals)
-    print(dri_df.head())
-    print(dri_df.loc[1.9999])
-    # print(dri_df['protein_g_kg_day'])
-    print('protein \n',dri_df.loc[patient_info['age']]['protein_g_kg_day'])
 
     # Compute Basal Metabolic Rate (BMR)
     bmr = basal_metabolic_rate(patient_info, dri_df)
@@ -192,7 +188,7 @@ def calculate_patient_needs(patient_info):
     carb_percentage_high = 0.65
     carb_low = bmr * carb_percentage_low / energy_provided['carbohydrate']
     carb_high = bmr * carb_percentage_high / energy_provided['carbohydrate']
-    carbohydrate = str(round(carb_low)) + '-' + str(round(carb_high))
+    carbohydrate = (carb_low + carb_high) / 2# str(round(carb_low)) + '-' + str(round(carb_high))
     print(carbohydrate)
 
     # fiber
@@ -202,7 +198,7 @@ def calculate_patient_needs(patient_info):
     # fat
     fat_low = bmr * dri_df.loc[age]['fat_lowEnd_energy_percent'] / energy_provided['fat'] / 100
     fat_high = bmr * dri_df.loc[age]['fat_highEnd_energy_percent'] / energy_provided['fat'] / 100
-    fat = str(round(fat_low)) + '-' + str(round(fat_high))
+    fat = (fat_low + fat_high) / 2# str(round(fat_low)) + '-' + str(round(fat_high))
     print(fat)
 
     # alpha lenolic acid
@@ -213,9 +209,9 @@ def calculate_patient_needs(patient_info):
     fat_lenolic_acid = bmr * dri_df.loc[age]['fat_lenolic_acid_energy_percent'] / energy_provided['fat'] / 100
     print('fat_lenolic_acid: ', fat_lenolic_acid)
 
-    fat_cholesterol = 'As low as possible while consuming a nutritionally adequate diet'
-    fat_saturated_fatty_acids = 'As low as possible while consuming a nutritionally adequate diet'
-    fat_trans_fatty_acids = 'As low as possible while consuming a nutritionally adequate diet'
+    fat_cholesterol = 0 # 'As low as possible while consuming a nutritionally adequate diet'
+    fat_saturated_fatty_acids = 0 #'As low as possible while consuming a nutritionally adequate diet'
+    fat_trans_fatty_acids = 0# 'As low as possible while consuming a nutritionally adequate diet'
 
     total_water = dri_df.loc[age]['total_water_liters']
 
@@ -242,20 +238,21 @@ def calculate_patient_needs(patient_info):
                             fat_cholesterol,
                             total_water]
 
-    macronutrient_intake = [0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0]
+    macronutrient_unit = ['g',
+                          'g',
+                          'g',
+                          'g',
+                          'g',
+                          'g',
+                          'g',
+                          'g',
+                          'g',
+                          'liters'
+                          ]
 
-    macronutrients = {'nutrient': macronutrient_names,
-                      'intake': macronutrient_intake,
-                      'DRI': macronutrient_dri}
+    macronutrients = {'Nutrition': macronutrient_names,
+                      'Need_Unit': macronutrient_unit,
+                      'Need_Amount': list(map(float, macronutrient_dri))}
 
     df_macronutrients = pd.DataFrame(macronutrients)
     print(df_macronutrients)
@@ -292,11 +289,25 @@ def calculate_patient_needs(patient_info):
                    dri_df.loc[age]['biotin_mg']
                    ]
 
-    vitamin_intake =[0] * 14
+    vitamin_unit =['mcg',
+                   'mg',
+                   'mcg',
+                   'mcg',
+                   'mcg',
+                   'mcg',
+                   'mg',
+                   'mcg',
+                   'mg',
+                   'mcg',
+                   'mg',
+                   'mg',
+                   'mg',
+                   'mg'
+                    ]
 
-    vitamins = {'nutrient': vitamin_names,
-                      'intake': vitamin_intake,
-                      'DRI': vitamin_dri}
+    vitamins = {'Nutrition': vitamin_names,
+                      'Need_Unit': vitamin_unit,
+                      'Need_Amount': list(map(float, vitamin_dri))}
 
     df_vitamins = pd.DataFrame(vitamins)
     print(df_vitamins)
@@ -337,19 +348,37 @@ def calculate_patient_needs(patient_info):
         dri_df.loc[age]['zinc_mg']
     ]
 
-    essential_minerals_intake = [0] * len(essential_mineral_dri)
+    essential_minerals_unit = ['mg',
+                               'g',
+                               'mcg',
+                               'mcg',
+                               'mg',
+                               'mcg',
+                               'mg',
+                               'mg',
+                               'mg',
+                               'mcg',
+                               'mg',
+                               'g',
+                               'mcg',
+                               'g',
+                               'mg'
+                                ]
     essential_minerals = {
-        'nutrient': essential_minerals_names,
-        'intake': essential_minerals_intake,
-        'DRI': essential_mineral_dri
+        'Nutrition': essential_minerals_names,
+        'Need_Unit': essential_minerals_unit,
+        'Need_Amount': list(map(float, essential_mineral_dri))
     }
 
     df_essential_minerals = pd.DataFrame(essential_minerals)
     print(df_essential_minerals)
 
-    return df_macronutrients, df_vitamins, df_essential_minerals
+    result_dri_df = pd.concat([df_macronutrients, df_vitamins, df_essential_minerals])
+    print('result_dri_df: \n', result_dri_df)
+
+    return result_dri_df
 
 
-# patient_info = preprocess_anthropometrics()
-# df_macronutrients, df_vitamins, df_essential_minerals = calculate_patient_needs(patient_info)
+patient_info = preprocess_anthropometrics()
+result_dri_df = calculate_patient_needs(patient_info)
 
