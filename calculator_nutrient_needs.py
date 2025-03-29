@@ -296,7 +296,6 @@ def calculate_patient_needs(patient_info):
     df_vitamins = pd.DataFrame(vitamins)
     print(df_vitamins)
 
-    # TODO Essential Minerals Table
     essential_minerals_names = [
         'Calcium',
         'Chloride',
