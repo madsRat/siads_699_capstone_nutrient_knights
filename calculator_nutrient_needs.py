@@ -256,6 +256,47 @@ def calculate_patient_needs(patient_info):
     print(df_macronutrients)
 
     # TODO Create Essential Vitamin table
+    vitamin_names = ['Vitamin A',
+                     'Vitamin C',
+                     'Vitamin D',
+                     'Vitamin B6',
+                     'Vitamin E',
+                     'Vitamin K',
+                     'Thiamin',
+                     'Vitamin B12',
+                     'Riboflavin',
+                     'Folate',
+                     'Niacin',
+                     'Choline',
+                     'Pantothenic Acid',
+                     'Biotin']
+
+    vitamin_dri = [dri_df.loc[age]['vitamin_a_mcg'],
+                   dri_df.loc[age]['vitamin_c_mg'],
+                   dri_df.loc[age]['vitamin_d_mcg'],
+                   dri_df.loc[age]['vitamin_b6_mcg'],
+                   dri_df.loc[age]['vitamin_e_mcg'],
+                   dri_df.loc[age]['vitamin_k_mcg'],
+                   dri_df.loc[age]['thiamin_mg'],
+                   dri_df.loc[age]['vitamin_b12_mcg'],
+                   dri_df.loc[age]['riboflavin_mg'],
+                   dri_df.loc[age]['folate_mcg'],
+                   dri_df.loc[age]['niacin_mg'],
+                   dri_df.loc[age]['choline_mg'],
+                   dri_df.loc[age]['pantothenic_acid_mg'],
+                   dri_df.loc[age]['biotin_mg']
+                   ]
+
+    vitamin_intake =[0] * 14
+
+    vitamins = {'nutrient': vitamin_names,
+                      'intake': vitamin_intake,
+                      'DRI': vitamin_dri}
+
+    df_vitamins = pd.DataFrame(vitamins)
+    print(df_vitamins)
+
+
 
 
 
