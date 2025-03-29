@@ -342,9 +342,9 @@ def calculate_patient_needs(patient_info):
     df_essential_minerals = pd.DataFrame(essential_minerals)
     print(df_essential_minerals)
 
+    return df_macronutrients, df_vitamins, df_essential_minerals
 
 
-
-patient_info = preprocess_anthropometrics()
-calculate_patient_needs(patient_info)
+# patient_info = preprocess_anthropometrics()
+# df_macronutrients, df_vitamins, df_essential_minerals = calculate_patient_needs(patient_info)
 

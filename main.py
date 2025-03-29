@@ -11,6 +11,7 @@ from aiohttp import worker
 from nutrient_analysis import Ui_main_window
 from GetJsonFromLlm import get_json_plaintext
 from calculator_nutrient_intake import calculate_nutrient_intake, compare_nutrient_intake_and_needs
+from calculator_nutrient_needs import preprocess_anthropometrics, calculate_patient_needs
 
 import sys
 import os
@@ -55,7 +56,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.output_json_str = None # LLM output from user input
 
         # define user inputs and responses in gui
-        self.ui.pushButton_calculate.clicked.connect(self.calculate_nutrition_needs)
+        self.ui.pushButton_calculate.clicked.connect(self.calculate)
         self.ui.tabWidget.tabBarClicked.connect(self.tab_results)
 
     def tab_results(self):
@@ -70,7 +71,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
 
-    def calculate_nutrition_needs(self):
+    def calculate(self):
         print('STARTED: calculate push button')
 
         # Step 1: Intialize RD Chatbot.
@@ -80,46 +81,39 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.start_llm_parser_thread()
 
         # Step 3: Run Nutrition Calculators
-        # self.DRI_calculator()
+        self.start_DRI_calculator_thread()
         self.start_nutrient_intake_calculator_thread()
+
 
         print('COMPLETED: calculate push button')
 
     def DRI_calculator(self):
-        print('STARTED: DRI_calculator')
-        import json
-        llm_output_dict = json.loads(self.output_json_str)
-        print('llm_output_dict:', llm_output_dict)
 
-        age = llm_output_dict['patient']['age']
-        weight = llm_output_dict['patient']['weight']
-        height = llm_output_dict['patient']['height']
-        sex = llm_output_dict['patient']['sex'].lower()
-        activity_level = llm_output_dict['patient']['activity level'].lower()
+        patient_info = preprocess_anthropometrics()
+        df_macronutrients, df_vitamins, df_essential_minerals = calculate_patient_needs(patient_info)
 
-        # # feed in fake data
-        # age = 30 # years
-        # weight = 160 # lbs
-        # height = 72 # inches
-        # sex = 'male'
-        # activity_level = 'Active'
+        # Set Table for Macronutrients in GUI
+        for row in range(df_macronutrients.shape[0]):
+            for col in range(df_macronutrients.shape[1]):
+                item = QTableWidgetItem(str(df_macronutrients.iloc[row, col]))
+                self.ui.tableWidget_macronutrients.setItem(row, col, item)
 
-        print('sex', sex)
-        print('age:', age)
-        print('weight:', weight)
-        print('height:', height)
-        print('activity_level:', activity_level)
-        print('\n')
+        # Set Table for Vitamins in GUI
+        for row in range(df_vitamins.shape[0]):
+            for col in range(df_vitamins.shape[1]):
+                item = QTableWidgetItem(str(df_vitamins.iloc[row, col]))
+                self.ui.tableWidget_micronutrients.setItem(row, col, item)
 
-        import pandas as pd
-        if sex == 'male':
-            df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='male')
-        if sex == 'female':
-            df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='female')
+        # Set Table for Essential Minerals in GUI
+        for row in range(df_essential_minerals.shape[0]):
+            for col in range(df_essential_minerals.shape[1]):
+                item = QTableWidgetItem(str(df_essential_minerals.iloc[row, col]))
+                self.ui.tableWidget_essential_minerals.setItem(row, col, item)
 
-        print('Loaded', sex, 'dataset.')
-        print(df)
-        print('COMPLETED: DRI_calculator')
+    def start_DRI_calculator_thread(self):
+        worker = self.Worker_DRI_calculator(self, self.ui)
+        self.threadpool.start(worker)
+        print('DRI calculator thread started')
 
     def start_nutrient_intake_calculator_thread(self):
         worker = self.Worker_nutrient_intake_calculator()
@@ -144,6 +138,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8515"))
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
+
+    class Worker_DRI_calculator(QRunnable):
+        def __init__(self, main, ui):
+            super().__init__()
+            self.main = main
+            self.ui = ui
+        @pyqtSlot()
+        def run(self):
+            print('STARTED: DRI calculator')
+            self.main.DRI_calculator()
 
     class Worker_nutrient_intake_calculator(QRunnable):
         def __init__(self):

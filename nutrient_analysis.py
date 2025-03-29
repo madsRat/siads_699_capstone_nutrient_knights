@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem
 
 class Ui_main_window(object):
     def setupUi(self, main_window):
@@ -185,6 +185,11 @@ class Ui_main_window(object):
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setObjectName("horizontalLayout")
+
+
+
+
+
         self.tableWidget_macronutrients = QtWidgets.QTableWidget(self.horizontalLayoutWidget)
         self.tableWidget_macronutrients.setRowCount(9)
         self.tableWidget_macronutrients.setColumnCount(3)
@@ -200,6 +205,11 @@ class Ui_main_window(object):
         self.tableWidget_macronutrients.horizontalHeader().setDefaultSectionSize(67)
         self.tableWidget_macronutrients.verticalHeader().setDefaultSectionSize(25)
         self.horizontalLayout.addWidget(self.tableWidget_macronutrients)
+
+        # item = QTableWidgetItem(str('testing123'))
+        # self.tableWidget_macronutrients.setItem(0, 0, item)
+
+
         self.tableWidget_micronutrients = QtWidgets.QTableWidget(self.horizontalLayoutWidget)
         self.tableWidget_micronutrients.setRowCount(14)
         self.tableWidget_micronutrients.setColumnCount(3)
@@ -215,6 +225,10 @@ class Ui_main_window(object):
         self.tableWidget_micronutrients.horizontalHeader().setDefaultSectionSize(67)
         self.tableWidget_micronutrients.verticalHeader().setDefaultSectionSize(25)
         self.horizontalLayout.addWidget(self.tableWidget_micronutrients)
+
+
+
+
         self.tableWidget_essential_minerals = QtWidgets.QTableWidget(self.horizontalLayoutWidget)
         self.tableWidget_essential_minerals.setRowCount(15)
         self.tableWidget_essential_minerals.setColumnCount(3)
