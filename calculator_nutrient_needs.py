@@ -379,6 +379,5 @@ def calculate_patient_needs(patient_info):
     return result_dri_df
 
 
-patient_info = preprocess_anthropometrics()
-result_dri_df = calculate_patient_needs(patient_info)
+
 

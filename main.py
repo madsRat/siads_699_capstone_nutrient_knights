@@ -1,4 +1,5 @@
 from datetime import time
+import pandas as pd
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThreadPool, QThread, QRunnable
@@ -96,28 +97,36 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # compute nutrition intake
         # AND create nutrition tables in results directory
         calculate_nutrient_intake("Intake.txt")
-        compare_nutrient_intake_and_needs(result_dri_df)
+        compare_nutrient_intake_and_needs(result_dri_df) # produces 'Nutrition_Intake_vs_Needs.csv'
         print('DRI and intake calculations completed')
 
+        # read results table from 'Nutrition_Intake_vs_Needs.csv'
+        results_df = pd.read_csv(r'results/Nutrition_Intake_vs_Needs.csv')
 
+        df_macronutrients = results_df.iloc[0:10][['Nutrition', 'Intake_Amount', 'Need_Amount']]
+        df_vitamins = results_df.iloc[11:24][['Nutrition', 'Intake_Amount', 'Need_Amount']]
+        df_essential_minerals = results_df.iloc[24:39][['Nutrition', 'Intake_Amount', 'Need_Amount']]
 
-        # # Set Table for Macronutrients in GUI
-        # for row in range(df_macronutrients.shape[0]):
-        #     for col in range(df_macronutrients.shape[1]):
-        #         item = QTableWidgetItem(str(df_macronutrients.iloc[row, col]))
-        #         self.ui.tableWidget_macronutrients.setItem(row, col, item)
-        #
-        # # Set Table for Vitamins in GUI
-        # for row in range(df_vitamins.shape[0]):
-        #     for col in range(df_vitamins.shape[1]):
-        #         item = QTableWidgetItem(str(df_vitamins.iloc[row, col]))
-        #         self.ui.tableWidget_micronutrients.setItem(row, col, item)
-        #
-        # # Set Table for Essential Minerals in GUI
-        # for row in range(df_essential_minerals.shape[0]):
-        #     for col in range(df_essential_minerals.shape[1]):
-        #         item = QTableWidgetItem(str(df_essential_minerals.iloc[row, col]))
-        #         self.ui.tableWidget_essential_minerals.setItem(row, col, item)
+        # Set Table for Macronutrients in GUI
+        for row in range(df_macronutrients.shape[0]):
+            for col in range(df_macronutrients.shape[1]):
+                item = QTableWidgetItem(str(df_macronutrients.iloc[row, col]))
+                self.ui.tableWidget_macronutrients.setItem(row, col, item)
+        self.ui.tableWidget_macronutrients.update()
+
+        # Set Table for Vitamins in GUI
+        for row in range(df_vitamins.shape[0]):
+            for col in range(df_vitamins.shape[1]):
+                item = QTableWidgetItem(str(df_vitamins.iloc[row, col]))
+                self.ui.tableWidget_micronutrients.setItem(row, col, item)
+        self.ui.tableWidget_micronutrients.update()
+
+        # Set Table for Essential Minerals in GUI
+        for row in range(df_essential_minerals.shape[0]):
+            for col in range(df_essential_minerals.shape[1]):
+                item = QTableWidgetItem(str(df_essential_minerals.iloc[row, col]))
+                self.ui.tableWidget_essential_minerals.setItem(row, col, item)
+        self.ui.tableWidget_essential_minerals.update()
 
     def start_DRI_calculator_thread(self):
         worker = self.Worker_DRI_calculator(self, self.ui)
