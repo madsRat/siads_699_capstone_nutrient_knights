@@ -296,6 +296,52 @@ def calculate_patient_needs(patient_info):
     df_vitamins = pd.DataFrame(vitamins)
     print(df_vitamins)
 
+    # TODO Essential Minerals Table
+    essential_minerals_names = [
+        'Calcium',
+        'Chloride',
+        'Chromium',
+        'Copper',
+        'Fluoride',
+        'Iodine',
+        'Iron',
+        'Magnesium',
+        'Manganese',
+        'Molybdenum',
+        'Phosphorus',
+        'Potassium',
+        'Selenium',
+        'Sodium',
+        'Zinc'
+    ]
+
+    essential_mineral_dri = [
+        dri_df.loc[age]['calcium_mg'],
+        dri_df.loc[age]['chloride_g'],
+        dri_df.loc[age]['chromium_mcg'],
+        dri_df.loc[age]['copper_mcg'],
+        dri_df.loc[age]['fluoride_mg'],
+        dri_df.loc[age]['iodine_mcg'],
+        dri_df.loc[age]['iron_mg'],
+        dri_df.loc[age]['magnesium_mg'],
+        dri_df.loc[age]['manganese_mg'],
+        dri_df.loc[age]['molybdenum_mcg'],
+        dri_df.loc[age]['phosphorus_mg'],
+        dri_df.loc[age]['potassium_g'],
+        dri_df.loc[age]['selenium_mcg'],
+        dri_df.loc[age]['sodium_g'],
+        dri_df.loc[age]['zinc_mg']
+    ]
+
+    essential_minerals_intake = [0] * len(essential_mineral_dri)
+    essential_minerals = {
+        'nutrient': essential_minerals_names,
+        'intake': essential_minerals_intake,
+        'DRI': essential_mineral_dri
+    }
+
+    df_essential_minerals = pd.DataFrame(essential_minerals)
+    print(df_essential_minerals)
 
 
 
