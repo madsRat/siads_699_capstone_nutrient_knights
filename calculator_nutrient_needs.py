@@ -17,12 +17,17 @@ def parse_amount_unit(value):
 
 def preprocess_anthropometrics():
 
-    # feed in fake data
-    sex = 'Male'
-    age = '30 years'  # years
-    weight = '160 lbs'  # lbs
-    height = "6'" #'72 inches' # inches
-    activity_level = 'Active'
+    import json
+    with open('results/llm_output_data.json', 'r') as file:
+        patient_dict = json.load(file)
+        print('PATIENT DICTIONARY:\n', patient_dict)
+
+    # input data
+    sex = patient_dict['patient']['sex']# 'Male'
+    age = patient_dict['patient']['age'] #'30 years'  # years
+    weight = patient_dict['patient']['weight']#'160 lbs'  # lbs
+    height = patient_dict['patient']['height']#"6'" #'72 inches' # inches
+    activity_level = patient_dict['patient']['activity level']#'Active'
 
     # unit conversions to metric for DRI calculations
     # target variables weight and height
@@ -60,17 +65,14 @@ def preprocess_anthropometrics():
         "months": (12, "years"),  # years
     }
 
-    # anthropometrics = [sex, age, weight, height, activity_level]
-    # anthro_amount_units = []
-
-    anthropometrics = {'sex': sex,
+    patient_anthropometrics = {'sex': sex,
                        'age': age,
                        'weight': weight,
                        'height': height,
                        'activity_level': activity_level}
 
     # split units from values
-    for key, metric in anthropometrics.items():
+    for key, metric in patient_anthropometrics.items():
 
         # check if 5' 11" notation is used and convert to cm
         if "'" in metric:
@@ -119,12 +121,12 @@ def preprocess_anthropometrics():
             val = val.lower()
             val = alternative_names[val]
 
-        anthropometrics[key] = val  # [val, unit]
+        patient_anthropometrics[key] = val  # [val, unit]
 
-    print(anthropometrics)
-    return anthropometrics
+    print(patient_anthropometrics)
+    return patient_anthropometrics
 
-def basal_metabolic_rate(patient_info, df):
+def basal_metabolic_rate(patient_anthropometrics, df):
     # Compute Basal Metabolic Rate (BMR)
     activity_levels = {
         'inactive': 1.4,
@@ -133,28 +135,28 @@ def basal_metabolic_rate(patient_info, df):
         'very_active': 2.0,
     }
 
-    if patient_info['sex'] == 'male':
+    if patient_anthropometrics['sex'] == 'male':
         s_constant = 5
-    elif patient_info['sex'] == 'female':
+    elif patient_anthropometrics['sex'] == 'female':
         s_constant = -161
     else:
         s_constant = None
         print("Patient Sex undefined.")
 
-    BMR = 10 * patient_info['weight'] + 6.25 * patient_info['height'] - 5 * patient_info['age'] + s_constant
-    bmr_adjusted = BMR * activity_levels[patient_info['activity_level']]
+    BMR = 10 * patient_anthropometrics['weight'] + 6.25 * patient_anthropometrics['height'] - 5 * patient_anthropometrics['age'] + s_constant
+    bmr_adjusted = BMR * activity_levels[patient_anthropometrics['activity_level']]
 
     return round(bmr_adjusted, 2)
 
-def calculate_patient_needs(patient_info):
+def calculate_patient_needs(patient_anthropometrics):
 
     # import DRI Tables
-    if patient_info['sex'] == 'male':
+    if patient_anthropometrics['sex'] == 'male':
         dri_df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='male')
-    if patient_info['sex']== 'female':
+    if patient_anthropometrics['sex']== 'female':
         dri_df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='female')
 
-    print('Loaded', patient_info['sex'], 'dataset.')
+    print('Loaded', patient_anthropometrics['sex'], 'dataset.')
     print(dri_df)
 
     interval = list(dri_df['age']) + [150]
@@ -167,13 +169,13 @@ def calculate_patient_needs(patient_info):
     dri_df = dri_df.set_index(intervals)
 
     # Compute Basal Metabolic Rate (BMR)
-    bmr = basal_metabolic_rate(patient_info, dri_df)
+    bmr = basal_metabolic_rate(patient_anthropometrics, dri_df)
     print('Basal Metabolic Rate:', bmr)
 
-    age = patient_info['age']
+    age = patient_anthropometrics['age']
 
     # recommended protein = patient weight (kg) * protein table (by age)
-    protein = patient_info['weight'] * dri_df.loc[age]['protein_g_kg_day']
+    protein = patient_anthropometrics['weight'] * dri_df.loc[age]['protein_g_kg_day']
 
     # Table 3 Energy Provided by Macronutrients (kcal/g)
     energy_provided = {

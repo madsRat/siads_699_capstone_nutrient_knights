@@ -78,25 +78,23 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # Step 1: Intialize RD Chatbot.
         self.start_rd_chatbot_thread()
 
-        # Step 2: Extract data from RD Inputs.
-        self.start_llm_parser_thread()
-
-        # Step 3: Run Nutrition Calculators
+        # Step 2: Extract data from RD Inputs AND Run Nutrition Calculators
         self.start_DRI_calculator_thread()
         # self.start_nutrient_intake_calculator_thread()
-
 
         print('COMPLETED: calculate push button')
 
     def DRI_calculator(self):
 
+        get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText()) # returns json file in results directory
+
         # compute DRI, patient nutrition needs
-        patient_info = preprocess_anthropometrics()
-        result_dri_df = calculate_patient_needs(patient_info)
+        patient_anthropometrics = preprocess_anthropometrics()
+        result_dri_df = calculate_patient_needs(patient_anthropometrics)
 
         # compute nutrition intake
         # AND create nutrition tables in results directory
-        calculate_nutrient_intake("Intake.txt")
+        calculate_nutrient_intake()
         compare_nutrient_intake_and_needs(result_dri_df) # produces 'Nutrition_Intake_vs_Needs.csv'
         print('DRI and intake calculations completed')
 
@@ -138,10 +136,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     #     self.threadpool.start(worker)
     #     print('STARTED: nutrient intake calculator thread')
 
-    def start_llm_parser_thread(self):
-        worker = self.Worker_llm_parser(self, self.ui)
-        self.threadpool.start(worker)
-        print('STARTED: start_llm_parser_thread')
+    # def start_llm_parser_thread(self):
+    #     worker = self.Worker_llm_parser(self, self.ui)
+    #     self.threadpool.start(worker)
+    #     print('STARTED: start_llm_parser_thread')
 
     def start_rd_chatbot_thread(self):
         worker = self.Worker_rd_chatbot()
@@ -176,17 +174,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     #         calculate_nutrient_intake("Intake.txt")
     #         print('COMPLETED: nutrient intake calculator')
 
-    class Worker_llm_parser(QRunnable):
-        def __init__(self, main, ui):
-            super().__init__()
-            self.main = main
-            self.ui = ui
-        @pyqtSlot()
-        def run(self):
-            print('STARTED: Worker_llm_parser')
-            # pass output back to man gui.
-            self.main.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
-            print('COMPLETED: Worker_llm_parser')
+    # class Worker_llm_parser(QRunnable):
+    #     def __init__(self, main, ui):
+    #         super().__init__()
+    #         self.main = main
+    #         self.ui = ui
+    #     @pyqtSlot()
+    #     def run(self):
+    #         print('STARTED: Worker_llm_parser')
+    #         # pass output back to man gui.
+    #         self.main.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
+    #         print('COMPLETED: Worker_llm_parser')
 
     class Worker_rd_chatbot(QRunnable):
         def __init__(self):

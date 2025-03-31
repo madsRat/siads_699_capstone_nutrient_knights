@@ -4,19 +4,27 @@ import json
 from pathlib import Path
 
 
-def create_nutrient_table(llm_output_json):
+def create_nutrient_table():
     # find food list from intake json file
 
-    # Load JSON data from file
-    file_path = llm_output_json  # "Intake.txt"  # Update with the correct path
-    with open(file_path, "r", encoding="utf-8") as file:
+    # # Load JSON data from file
+    # file_path = llm_output_json  # "Intake.txt"  # Update with the correct path
+    # with open(file_path, "r", encoding="utf-8") as file:
+    #     data = json.load(file)
+
+    import json
+    with open('results/llm_output_data.json', 'r') as file:
         data = json.load(file)
+        print('PATIENT DICTIONARY:\n', data)
+
+    print('data type: \n', type(data))
+    print('data: \n', data)
 
     # Extract food descriptions
     food_items = []
-    for meal in data["patient"]["diet_recall"]:
-        for food in meal["food"]:
-            food_items.append(food["description"])
+    for meal in data["diet_recall"]:
+        for food in meal["items"]:
+            food_items.append(food['food_description'])
 
     # Print the extracted food items
     print("Food Items:")
@@ -121,7 +129,7 @@ def separate_units_from_table(nutrition_table):
     filepath = Path(r"results/food_nutrition_table.csv")
     df.to_csv(filepath)
 
-def extract_intake_amounts(llm_output_json):
+def extract_intake_amounts():
     # load food intake json file again to get food intake, convert unit to ml or g
 
     import json
@@ -168,17 +176,17 @@ def extract_intake_amounts(llm_output_json):
             return factor, target_unit, 1
         return None, None, None
 
-    # Load JSON data from file
-    file_path = llm_output_json  # Update with the correct path
-    with open(file_path, "r", encoding="utf-8") as file:
+    import json
+    with open('results/llm_output_data.json', 'r') as file:
         data = json.load(file)
+        print('PATIENT DICTIONARY:\n', data)
 
     # Process and convert food items
     converted_foods = []
-    for meal in data["patient"]["diet_recall"]:
-        for food in meal["food"]:
+    for meal in data["diet_recall"]:
+        for food in meal["items"]:
             amount_str = food["amount"]
-            description = food["description"]
+            description = food["food_description"]
             converted_value, target_unit, numeric_value = convert_unit(amount_str)
             if converted_value is not None:
                 rounded_value = int(converted_value) if converted_value.is_integer() else round(converted_value)  # , 2)
@@ -443,11 +451,11 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     filepath = Path(r"results/Nutrition_Intake_vs_Needs.csv")
     merged_df.to_csv(filepath, index=False)
 
-def calculate_nutrient_intake(patient_intake):
+def calculate_nutrient_intake():
     # chain all functions above and create nutrient intake table
-    create_nutrient_table(patient_intake)
+    create_nutrient_table()
     separate_units_from_table("results/nutrition_table.csv")
-    extract_intake_amounts(patient_intake)
+    extract_intake_amounts()
     tally_nutrients("results/food_summary.csv", "results/food_nutrition_table.csv")
     return None
 
