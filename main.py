@@ -86,9 +86,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # clear previous results page
         self.ui.textBrowser_is_patient_nutrient_deficient.setText('')
-        self.ui.tableWidget_macronutrients.clear()
-        self.ui.tableWidget_micronutrients.clear()
-        self.ui.tableWidget_essential_minerals.clear()
+        self.ui.tableWidget_macronutrients.clearContents()
+        self.ui.tableWidget_micronutrients.clearContents()
+        self.ui.tableWidget_essential_minerals.clearContents()
 
         # remove existing json ouput file if already exists
         file_path = 'results/llm_output_data.json'
