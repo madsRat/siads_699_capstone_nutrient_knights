@@ -52,6 +52,9 @@ class Ui_main_window(object):
         self.label_select_pdf_file_2 = QtWidgets.QLabel(self.gridLayoutWidget)
         self.label_select_pdf_file_2.setObjectName("label_select_pdf_file_2")
         self.gridLayout.addWidget(self.label_select_pdf_file_2, 5, 0, 1, 1)
+
+
+
         self.browse_pdf_file = QtWidgets.QPushButton(self.gridLayoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
@@ -75,6 +78,13 @@ class Ui_main_window(object):
         self.browse_pdf_file_ocr.setMaximumSize(QtCore.QSize(110, 16777215))
         self.browse_pdf_file_ocr.setObjectName("browse_pdf_file_ocr")
         self.gridLayout.addWidget(self.browse_pdf_file_ocr, 6, 0, 1, 1)
+
+
+        # grey out ocr push button bc feature is currently unavailable.
+        self.browse_pdf_file_ocr.setEnabled(False)
+
+
+
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout.addItem(spacerItem1, 7, 0, 1, 1)
         self.file_path_selected_pdf_ocr = QtWidgets.QTextBrowser(self.gridLayoutWidget)
@@ -300,7 +310,9 @@ class Ui_main_window(object):
         self.browse_pdf_file.setText(_translate("main_window", "Browse"))
         self.label_select_pdf_file.setText(_translate("main_window", "b. Select PDF File:"))
         self.browse_pdf_file_ocr.setText(_translate("main_window", "Browse"))
-        self.file_path_selected_pdf_ocr.setPlaceholderText(_translate("main_window", "file path"))
+
+        self.file_path_selected_pdf_ocr.setPlaceholderText(_translate("main_window", "Feature currently unavailable."))
+
         self.file_path_selected_pdf.setPlaceholderText(_translate("main_window", "file path"))
         self.label_enter_patients_dietary_recall.setText(_translate("main_window", "1. Enter Patient\'s 24-hr Dietary Recall"))
         self.pushButton_calculate.setText(_translate("main_window", "Calculate"))

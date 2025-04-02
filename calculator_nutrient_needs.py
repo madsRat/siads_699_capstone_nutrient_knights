@@ -174,8 +174,8 @@ def calculate_patient_needs(patient_anthropometrics):
 
     age = patient_anthropometrics['age']
 
-    # recommended protein = patient weight (kg) * protein table (by age)
-    protein = patient_anthropometrics['weight'] * dri_df.loc[age]['protein_g_kg_day']
+    # protein = patient weight (kg) * protein table (by age)
+    protein = patient_anthropometrics['weight'] * dri_df.loc[age]['protein_g_kg_day'] /10
 
     # Table 3 Energy Provided by Macronutrients (kcal/g)
     energy_provided = {

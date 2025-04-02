@@ -10,7 +10,7 @@ from PyQt5.QtCore import *
 from aiohttp import worker
 
 from nutrient_analysis import Ui_main_window
-from GetJsonFromLlm import get_json_plaintext
+from GetJsonFromLlm import get_json_plaintext, get_json
 from calculator_nutrient_intake import calculate_nutrient_intake, compare_nutrient_intake_and_needs
 from calculator_nutrient_needs import preprocess_anthropometrics, calculate_patient_needs
 
@@ -59,21 +59,41 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # define user inputs and responses in gui
         self.ui.pushButton_calculate.clicked.connect(self.calculate)
         self.ui.tabWidget.tabBarClicked.connect(self.tab_results)
+        self.ui.browse_pdf_file.clicked.connect(self.load_pdf_file)
+
+    def load_pdf_file(self):
+        print('Loading pdf file.')
+        # clear previous filepath
+        self.ui.file_path_selected_pdf.setText('file path')
+
+        #load file dialog
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Select PDF file")
+        if file_path != (None or ''):
+            self.ui.file_path_selected_pdf.setText(file_path)
+            # clear plain text input
+            self.ui.plainTextEdit_dietary_recall.setPlainText("")
+            self.ui.plainTextEdit_dietary_recall.setDisabled(True)
+        else:
+            # cover edge case so textbox is available if user changes mind about inputs
+            self.ui.plainTextEdit_dietary_recall.setDisabled(False)
+
 
     def tab_results(self):
 
         # LLM parsed data
-        print('self.output_json_str:  \n', self.output_json_str)
-
-        # Wei code output available as csv in results directory
-
-        # TODO Complete calculator_nutrient_needs.py
-        # TODO calculator_nutrient_needs.py output goes into Wei's compare_nutrient_intake_needs() function.
-
-
+        # print('self.output_json_str:  \n', self.output_json_str)
+        print('Tab changed.')
 
     def calculate(self):
-        print('STARTED: calculate push button')
+
+        # remove existing json ouput file if already exists
+        file_path = 'results/llm_output_data.json'
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"File {file_path} deleted successfully.")
+        else:
+            print('STARTED: calculate push button')
 
         # Step 1: Intialize RD Chatbot.
         self.start_rd_chatbot_thread()
@@ -86,7 +106,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def DRI_calculator(self):
 
-        get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText()) # returns json file in results directory
+        # run calculator based on input data (option 1 or option 2)
+        if self.ui.file_path_selected_pdf.toPlainText() == '':
+            # user chooses option 1. to input freetext data
+            print('filepath:\n', self.ui.file_path_selected_pdf.toPlainText())
+            get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText()) # returns json file in results directory
+        else:
+            # user chooses option 2. to input pdf file
+            print('filepath:\n', self.ui.file_path_selected_pdf.toPlainText())
+            get_json(self.ui.file_path_selected_pdf.toPlainText())
 
         # compute DRI, patient nutrition needs
         patient_anthropometrics = preprocess_anthropometrics()

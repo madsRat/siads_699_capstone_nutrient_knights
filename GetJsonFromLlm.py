@@ -120,11 +120,6 @@ def get_json_plaintext(plaintxt):
     prompt = system_prompt + plaintxt
     result = llm.invoke(prompt).content
 
-    # content = str(result)
-    # content_string = content.replace("\\n", "\n").replace("\\'", "'").replace("\\\"", "\"")
-
-    # json_txt = extract_json(result) # content_string
-
     json_txt = extract_json(result) # content_string
 
     print('LLM OUTPUT RESULT: \n', type(json_txt))
@@ -157,6 +152,8 @@ def get_json(pdf_file_path):
     "weight": "142 lbs",
     "dob": "09/06/1979",
     "age": "46 years"
+    "sex": "Female"
+    "activity level": "Active"
   },
   "diet_recall": [
     {
@@ -252,12 +249,24 @@ def get_json(pdf_file_path):
 }
     """
     model="gpt-4o-mini"
-    result = get_llm_response(pdf_file_path, model, system_prompt)
-    content = str(result)
-    content_string = content.replace("\\n", "\n").replace("\\'", "'").replace("\\\"", "\"")
+    result = get_llm_response(pdf_file_path, model, system_prompt).content
 
-    json = extract_json(content_string)
-    return json
+    print('RESULT: \n', result)
+
+    json_txt = extract_json(result) # content_string
+
+    print('LLM OUTPUT RESULT: \n', type(json_txt))
+    print('LLM OUTPUT RESULT: \n', json_txt)
+
+    import json
+    python_dict = json.loads(json_txt)
+    print('PYTHON DICT:', type(python_dict))
+    print('PYTHON DICT:', python_dict)
+
+    with open('results/llm_output_data.json', 'w') as outfile:
+        json.dump(python_dict, outfile, indent=4)
+        print('JSON FILE EXPORTED')
+    return None
 
 def get_food_json(pdf_file_path):
     json = ''
