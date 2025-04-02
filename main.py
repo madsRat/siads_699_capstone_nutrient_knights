@@ -80,6 +80,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def calculate(self):
 
+        # change color of button to indicate work in progress
+        self.ui.pushButton_calculate.setText('Calculating...')
+        self.ui.pushButton_calculate.setStyleSheet("background-color: green;")
+
+        # clear previous results page
+        self.ui.textBrowser_is_patient_nutrient_deficient.setText('')
+        self.ui.tableWidget_macronutrients.clear()
+        self.ui.tableWidget_micronutrients.clear()
+        self.ui.tableWidget_essential_minerals.clear()
+
         # remove existing json ouput file if already exists
         file_path = 'results/llm_output_data.json'
         if os.path.exists(file_path):
@@ -175,6 +185,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         print('RESULT SUMMARY:\n', result)
         self.ui.textBrowser_is_patient_nutrient_deficient.setText(result)
         self.ui.textBrowser_is_patient_nutrient_deficient.update()
+
+        # change color of push button to indicate work is complete
+        self.ui.pushButton_calculate.setText('Calculate')
+        self.ui.pushButton_calculate.setStyleSheet("background-color: gray;")
 
     def start_DRI_calculator_thread(self):
         worker = self.Worker_DRI_calculator(self, self.ui)
