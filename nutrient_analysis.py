@@ -161,10 +161,20 @@ class Ui_main_window(object):
         self.label_enter_patients_dietary_recall_2.setFont(font)
         self.label_enter_patients_dietary_recall_2.setObjectName("label_enter_patients_dietary_recall_2")
         self.tabWidget.addTab(self.tab_analysis, "")
+
+
+
+
         self.tab_results = QtWidgets.QWidget()
         self.tab_results.setObjectName("tab_results")
         self.label_summary_of_results = QtWidgets.QLabel(self.tab_results)
         self.label_summary_of_results.setGeometry(QtCore.QRect(10, 0, 191, 31))
+
+
+
+
+
+
         font = QtGui.QFont()
         font.setFamily("Helvetica Neue")
         font.setPointSize(18)
@@ -195,9 +205,6 @@ class Ui_main_window(object):
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setObjectName("horizontalLayout")
-
-
-
 
 
         self.tableWidget_macronutrients = QtWidgets.QTableWidget(self.horizontalLayoutWidget)
@@ -270,19 +277,11 @@ class Ui_main_window(object):
         self.label_essential_minerals.setObjectName("label_essential_minerals")
         self.horizontalLayout_2.addWidget(self.label_essential_minerals)
 
-
-
-
         self.webEngineView_rd_chatbot = QtWebEngineWidgets.QWebEngineView(self.tab_results)
         self.webEngineView_rd_chatbot.setGeometry(QtCore.QRect(700, 50, 271, 581))
         self.webEngineView_rd_chatbot.setAutoFillBackground(False)
         self.webEngineView_rd_chatbot.setUrl(QtCore.QUrl("about:blank"))
         self.webEngineView_rd_chatbot.setObjectName("webEngineView_rd_chatbot")
-
-
-
-
-
 
         self.tabWidget.addTab(self.tab_results, "")
         self.main_label_is_patient_nutrient_deficient = QtWidgets.QLabel(self.centralwidget)
@@ -301,6 +300,11 @@ class Ui_main_window(object):
         self.retranslateUi(main_window)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(main_window)
+
+        self.tabWidget.setTabEnabled(1, False)
+
+
+
 
     def retranslateUi(self, main_window):
         _translate = QtCore.QCoreApplication.translate

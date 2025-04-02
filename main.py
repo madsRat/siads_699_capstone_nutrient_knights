@@ -154,6 +154,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 self.ui.tableWidget_essential_minerals.setItem(row, col, item)
         self.ui.tableWidget_essential_minerals.update()
 
+        # Enable results tab
+        self.ui.tabWidget.setTabEnabled(1, True)
+        self.ui.tabWidget.setCurrentIndex(1) # automatically show to results tab
+
     def start_DRI_calculator_thread(self):
         worker = self.Worker_DRI_calculator(self, self.ui)
         self.threadpool.start(worker)
