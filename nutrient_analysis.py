@@ -214,7 +214,12 @@ class Ui_main_window(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
 
 
+        table_font = QtGui.QFont()
+        table_font.setFamily("Helvetica Neue")
+        table_font.setPointSize(12)
+
         self.tableWidget_macronutrients = QtWidgets.QTableWidget(self.horizontalLayoutWidget)
+        self.tableWidget_macronutrients.setFont(table_font)
         self.tableWidget_macronutrients.setRowCount(10)
         self.tableWidget_macronutrients.setColumnCount(3)
         self.tableWidget_macronutrients.setObjectName("tableWidget_macronutrients")
@@ -230,11 +235,8 @@ class Ui_main_window(object):
         self.tableWidget_macronutrients.verticalHeader().setDefaultSectionSize(25)
         self.horizontalLayout.addWidget(self.tableWidget_macronutrients)
 
-        # item = QTableWidgetItem(str('testing123'))
-        # self.tableWidget_macronutrients.setItem(0, 0, item)
-
-
         self.tableWidget_micronutrients = QtWidgets.QTableWidget(self.horizontalLayoutWidget)
+        self.tableWidget_micronutrients.setFont(table_font)
         self.tableWidget_micronutrients.setRowCount(14)
         self.tableWidget_micronutrients.setColumnCount(3)
         self.tableWidget_micronutrients.setObjectName("tableWidget_micronutrients")
@@ -250,10 +252,8 @@ class Ui_main_window(object):
         self.tableWidget_micronutrients.verticalHeader().setDefaultSectionSize(25)
         self.horizontalLayout.addWidget(self.tableWidget_micronutrients)
 
-
-
-
         self.tableWidget_essential_minerals = QtWidgets.QTableWidget(self.horizontalLayoutWidget)
+        self.tableWidget_essential_minerals.setFont(table_font)
         self.tableWidget_essential_minerals.setRowCount(15)
         self.tableWidget_essential_minerals.setColumnCount(3)
         self.tableWidget_essential_minerals.setObjectName("tableWidget_essential_minerals")
