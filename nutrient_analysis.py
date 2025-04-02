@@ -40,12 +40,14 @@ class Ui_main_window(object):
         self.tabWidget.setObjectName("tabWidget")
         self.tab_analysis = QtWidgets.QWidget()
         self.tab_analysis.setObjectName("tab_analysis")
+
         self.gridLayoutWidget = QtWidgets.QWidget(self.tab_analysis)
         self.gridLayoutWidget.setGeometry(QtCore.QRect(70, 70, 891, 521))
         self.gridLayoutWidget.setObjectName("gridLayoutWidget")
         self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setObjectName("gridLayout")
+
         self.label_enter_free_text = QtWidgets.QLabel(self.gridLayoutWidget)
         self.label_enter_free_text.setObjectName("label_enter_free_text")
         self.gridLayout.addWidget(self.label_enter_free_text, 0, 0, 1, 1)
@@ -180,18 +182,23 @@ class Ui_main_window(object):
         font.setPointSize(18)
         self.label_summary_of_results.setFont(font)
         self.label_summary_of_results.setObjectName("label_summary_of_results")
+
         self.verticalLayoutWidget = QtWidgets.QWidget(self.tab_results)
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 30, 681, 141))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
+
         self.label_is_patient_nutrient_deficient = QtWidgets.QLabel(self.verticalLayoutWidget)
         self.label_is_patient_nutrient_deficient.setObjectName("label_is_patient_nutrient_deficient")
         self.verticalLayout.addWidget(self.label_is_patient_nutrient_deficient)
+
         self.textBrowser_is_patient_nutrient_deficient = QtWidgets.QTextBrowser(self.verticalLayoutWidget)
         self.textBrowser_is_patient_nutrient_deficient.setObjectName("textBrowser_is_patient_nutrient_deficient")
         self.verticalLayout.addWidget(self.textBrowser_is_patient_nutrient_deficient)
+
+
         self.label_rd_chatbot = QtWidgets.QLabel(self.tab_results)
         self.label_rd_chatbot.setGeometry(QtCore.QRect(710, 10, 201, 31))
         font = QtGui.QFont()
@@ -277,11 +284,36 @@ class Ui_main_window(object):
         self.label_essential_minerals.setObjectName("label_essential_minerals")
         self.horizontalLayout_2.addWidget(self.label_essential_minerals)
 
+
+
+
+
+
+
+
+
+
+
+
         self.webEngineView_rd_chatbot = QtWebEngineWidgets.QWebEngineView(self.tab_results)
         self.webEngineView_rd_chatbot.setGeometry(QtCore.QRect(700, 50, 271, 581))
         self.webEngineView_rd_chatbot.setAutoFillBackground(False)
         self.webEngineView_rd_chatbot.setUrl(QtCore.QUrl("about:blank"))
         self.webEngineView_rd_chatbot.setObjectName("webEngineView_rd_chatbot")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         self.tabWidget.addTab(self.tab_results, "")
         self.main_label_is_patient_nutrient_deficient = QtWidgets.QLabel(self.centralwidget)
@@ -316,6 +348,7 @@ class Ui_main_window(object):
         self.browse_pdf_file_ocr.setText(_translate("main_window", "Browse"))
 
         self.file_path_selected_pdf_ocr.setPlaceholderText(_translate("main_window", "Feature currently unavailable."))
+        self.textBrowser_is_patient_nutrient_deficient.setPlaceholderText(_translate("main_window", ""))
 
         self.file_path_selected_pdf.setPlaceholderText(_translate("main_window", "file path"))
         self.label_enter_patients_dietary_recall.setText(_translate("main_window", "1. Enter Patient\'s 24-hr Dietary Recall"))

@@ -15,20 +15,12 @@ def create_nutrient_table():
     import json
     with open('results/llm_output_data.json', 'r') as file:
         data = json.load(file)
-        print('PATIENT DICTIONARY:\n', data)
-
-    print('data type: \n', type(data))
-    print('data: \n', data)
 
     # Extract food descriptions
     food_items = []
     for meal in data["diet_recall"]:
         for food in meal["items"]:
             food_items.append(food['food_description'])
-
-    # Print the extracted food items
-    print("Food Items:")
-    print("\n".join(food_items))
 
     # find nutrition fact for each food, but exclude water
     # Dictionary to collect nutrient data
@@ -258,106 +250,10 @@ def tally_nutrients(food_summary_table, food_nutrition_table):
     filepath = Path(r"results/nutrition_total_intake.csv")
     df_nutrition_summary.to_csv(filepath)
 
-    # TODO Format intake tables to match GUI tables (macro, vitamin, essentaal)
-    # macronutrients dataframe
-#     print(df_nutrition_summary)
-#     print(df_nutrition_summary.loc['Vitamin A']['Amount'])
-#
-# #     macronutrient_names = ['Carbohydrate',
-#                            'Total Fiber',
-#                            'Protein',
-#                            'Fat',
-#                            'Saturated fatty acids',
-#                            'Trans fatty acids',
-#                            'alpha-linolenic acid',
-#                            'Linoleic acid',
-#                            'Cholesterol',
-#                            'Total Water']
-#
-#     macronutrient_intake = [df_nutrition_summary.loc['Carbohydrate, by difference']['Amount'],
-#                             df_nutrition_summary.loc['Fiber, total dietary']['Amount'],
-#                             df_nutrition_summary.loc['Protein']['Amount'],
-#                             df_nutrition_summary.loc['Fatty acids, total monounsaturated']['Amount'], # TODO , placeholder only . need to find sum of fats
-#                             df_nutrition_summary.loc['Fatty acids, total saturated']['Amount'],
-#                             df_nutrition_summary.loc['Fatty acids, total trans']['Amount'],
-#                             df_nutrition_summary.loc['Fatty acids, total monounsaturated']['Amount'],# TODO , placeholder only . need to find sum of fats
-#                             df_nutrition_summary.loc['Fatty acids, total monounsaturated']['Amount'],# TODO , placeholder only . need to find sum of fats
-#                             df_nutrition_summary.loc['Cholesterol']['Amount'],
-#                             df_nutrition_summary.loc['Water']['Amount'],
-#                             ]
-#
-#     macronutrients = {'nutrient': macronutrient_names,
-#                       'intake': macronutrient_intake}
-#
-#     df_macronutrients = pd.DataFrame(macronutrients)
-#     print(df_macronutrients)
-#
-# tally_nutrients("results/food_summary.csv", "results/food_nutrition_table.csv")
-
-# def get_patient_nutrient_needs(patient_nutrient_needs):
-#     # Re-import required libraries due to code execution state reset
-#     import pandas as pd
-#     import re
-#     import numpy as np
-#
-#     # Re-read the file after reset
-#     file_path = patient_nutrient_needs
-#     with open(file_path, "r") as file:
-#         lines = file.readlines()
-#
-#     # Helper function to split amount and unit properly
-#     def parse_amount_unit(value):
-#         if 'low as possible' in value:
-#             return np.nan, ''
-#         if ' - ' in value:
-#             nums = re.findall(r"[\d.,]+", value)
-#             nums = [float(n.replace(',', '')) for n in nums]
-#             mean_val = sum(nums) / len(nums)
-#             unit = value.split()[-1]
-#             return round(mean_val, 2), unit
-#         if '(' in value:
-#             value = value.split('(')[0].strip()
-#         match = re.match(r"([\d.,]+)\s*([a-zA-Z/]+)", value)
-#         if match:
-#             amount, unit = match.groups()
-#             return float(amount.replace(',', '')), unit
-#         return np.nan, ''
-#
-#     # Reprocess the file with updated parsing
-#     data = []
-#     category = None
-#     valid_categories = ['Macronutrient', 'Vitamin', 'Mineral']
-#
-#     for line in lines:
-#         line = line.strip()
-#         if not line:
-#             continue
-#         if any(line == cat or line.startswith(cat + '\t') for cat in valid_categories):
-#             category = next(cat for cat in valid_categories if line.startswith(cat))
-#             continue
-#         if line.startswith('Estimated Daily Caloric Needs'):
-#             value = line.split('\t')[-1]
-#             amount, unit = parse_amount_unit(value)
-#             data.append(['Calory', 'Macronutrient', amount, 'kcal'])
-#             continue
-#         parts = line.split('\t')
-#         if len(parts) == 2:
-#             nutrition = parts[0].strip()
-#             value = parts[1].strip()
-#             amount, unit = parse_amount_unit(value)
-#             data.append([nutrition, category, amount, unit])
-#
-#     # Create the cleaned DataFrame
-#     df_final = pd.DataFrame(data, columns=['Nutrition', 'Category', 'Need_Amount', 'Need_Unit'])
-#
-#     # export table to results directory
-#     filepath = Path(r"results/nutrition_total_needs.csv")
-#     df_final.to_csv(filepath)
-
 def create_mapped_nutrient_table():
     # Define the ordered Need_Nutrition list
     ordered_need_nutrition = [
-        "Calory", "Carbohydrate", "Total Fiber", "Protein", "Fat",
+        "Calories", "Carbohydrate", "Total Fiber", "Protein", "Fat",
         "Saturated fatty acids", "Trans fatty acids", "Î±-Linolenic Acid", "Linoleic Acid",
         "Dietary Cholesterol", "Total Water", "Vitamin A", "Vitamin C", "Vitamin D",
         "Vitamin B6", "Vitamin E", "Vitamin K", "Thiamin", "Vitamin B12", "Riboflavin",
@@ -369,7 +265,7 @@ def create_mapped_nutrient_table():
 
     # Define the combined mapping as a dictionary
     mapping_dict = {
-        "Calory": "Energy",
+        "Calories": "Energy",
         "Carbohydrate": "Carbohydrate, by difference",
         "Total Fiber": "Fiber, total dietary",
         "Protein": "Protein",
@@ -426,7 +322,6 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     # Load the uploaded CSV files
     intake_df = pd.read_csv(nutrition_total_intake)
     needs_df = nutrition_total_needs # input is dataframe from DRI calculator
-    print('needs_df: \n', needs_df)
     mapping_df = pd.read_csv(ordered_mapped_nutrients)
 
     # Create mapping dictionary
@@ -466,6 +361,3 @@ def compare_nutrient_intake_and_needs(patient_nutrient_needs):
     create_mapped_nutrient_table()
     create_intake_vs_needs_table("results/nutrition_total_intake.csv", patient_nutrient_needs, "results/Ordered_Mapped_Nutrients.csv")
 
-# calculate_nutrient_intake("Intake.txt")
-# compare_nutrient_intake_and_needs("Patient Nutrition Needs.txt")
-# print("Complete")

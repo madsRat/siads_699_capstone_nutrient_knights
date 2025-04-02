@@ -20,7 +20,6 @@ def preprocess_anthropometrics():
     import json
     with open('results/llm_output_data.json', 'r') as file:
         patient_dict = json.load(file)
-        print('PATIENT DICTIONARY:\n', patient_dict)
 
     # input data
     sex = patient_dict['patient']['sex']# 'Male'
@@ -123,7 +122,6 @@ def preprocess_anthropometrics():
 
         patient_anthropometrics[key] = val  # [val, unit]
 
-    print(patient_anthropometrics)
     return patient_anthropometrics
 
 def basal_metabolic_rate(patient_anthropometrics, df):
@@ -156,21 +154,15 @@ def calculate_patient_needs(patient_anthropometrics):
     if patient_anthropometrics['sex']== 'female':
         dri_df = pd.read_excel('DRI_TABLES.xlsx', sheet_name='female')
 
-    print('Loaded', patient_anthropometrics['sex'], 'dataset.')
-    print(dri_df)
-
     interval = list(dri_df['age']) + [150]
-    print('interval', interval)
     # establish interval index for age ranges
     intervals = pd.IntervalIndex.from_breaks(interval, closed='left')
-    print(intervals)
 
     # assign index
     dri_df = dri_df.set_index(intervals)
 
     # Compute Basal Metabolic Rate (BMR)
     bmr = basal_metabolic_rate(patient_anthropometrics, dri_df)
-    print('Basal Metabolic Rate:', bmr)
 
     age = patient_anthropometrics['age']
 
@@ -191,25 +183,20 @@ def calculate_patient_needs(patient_anthropometrics):
     carb_low = bmr * carb_percentage_low / energy_provided['carbohydrate']
     carb_high = bmr * carb_percentage_high / energy_provided['carbohydrate']
     carbohydrate = (carb_low + carb_high) / 2# str(round(carb_low)) + '-' + str(round(carb_high))
-    print(carbohydrate)
 
     # fiber
     fiber = round(dri_df.loc[age]['fiber_g_kcal'] * bmr / 1000)
-    print(fiber)
 
     # fat
     fat_low = bmr * dri_df.loc[age]['fat_lowEnd_energy_percent'] / energy_provided['fat'] / 100
     fat_high = bmr * dri_df.loc[age]['fat_highEnd_energy_percent'] / energy_provided['fat'] / 100
     fat = (fat_low + fat_high) / 2# str(round(fat_low)) + '-' + str(round(fat_high))
-    print(fat)
 
     # alpha lenolic acid
     fat_alphaLenoic_acid = bmr * dri_df.loc[age]['fat_alphaLenolic_acid_energy_percent'] / energy_provided['fat'] / 100
-    print(fat_alphaLenoic_acid)
 
     # lenolic acid
     fat_lenolic_acid = bmr * dri_df.loc[age]['fat_lenolic_acid_energy_percent'] / energy_provided['fat'] / 100
-    print('fat_lenolic_acid: ', fat_lenolic_acid)
 
     fat_cholesterol = 0 # 'As low as possible while consuming a nutritionally adequate diet'
     fat_saturated_fatty_acids = 0 #'As low as possible while consuming a nutritionally adequate diet'
@@ -257,9 +244,7 @@ def calculate_patient_needs(patient_anthropometrics):
                       'Need_Amount': list(map(float, macronutrient_dri))}
 
     df_macronutrients = pd.DataFrame(macronutrients)
-    print(df_macronutrients)
 
-    # TODO Create Essential Vitamin table
     vitamin_names = ['Vitamin A',
                      'Vitamin C',
                      'Vitamin D',
@@ -312,7 +297,6 @@ def calculate_patient_needs(patient_anthropometrics):
                       'Need_Amount': list(map(float, vitamin_dri))}
 
     df_vitamins = pd.DataFrame(vitamins)
-    print(df_vitamins)
 
     essential_minerals_names = [
         'Calcium',
@@ -373,13 +357,14 @@ def calculate_patient_needs(patient_anthropometrics):
     }
 
     df_essential_minerals = pd.DataFrame(essential_minerals)
-    print(df_essential_minerals)
 
-    result_dri_df = pd.concat([df_macronutrients, df_vitamins, df_essential_minerals])
-    print('result_dri_df: \n', result_dri_df)
+    calories = {
+        'Nutrition': 'Calories',
+        'Need_Unit': 'kcal',
+        'Need_Amount': [bmr]
+    }
 
+    df_calories = pd.DataFrame(calories)
+
+    result_dri_df = pd.concat([df_macronutrients, df_vitamins, df_essential_minerals, df_calories])
     return result_dri_df
-
-
-
-

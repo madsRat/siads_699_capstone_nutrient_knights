@@ -26,39 +26,39 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.threadpool.setMaxThreadCount(4)
 
         # set default inputs for testing code
-        plain_text = """Name: Jane Doe 
-                        Date: 3/9/2025
-                        Telephone: 214.920.9999
-                        Physician: Sarah Connor
-                        Physician phone: 888.777.6666
-                        Height: 180 inches
-                        Weight: 172 lbs
-                        DOB: 09/09/1979
-                        Age: 46 years
-                        Sex: Female
-                        Activity Level: Active
-                        
-                        24-hr Diet Recall
-                        Time	Place	Amount	Food Description	Notes
-                        8 am	Kitchen	¾ cup	Raisin Bran
-                                ½ cup	Apple juice
-                                1 medium	Fresh peach
-                        12 pm	Dining table	½ cup	Ground beef
-                                1 cup	Mushroom stew
-                                ½ cup	Rice
-                                ¼ cup	Green beans
-                                8 oz	Water
-                        4 pm	Kitchen	½ cup	Pretzels
-                                1 oz	Chocolate
-                        7 pm	Dining table	1 cup	Spaghetti
-                                ½ cup	Ground beef
-                                8 oz	Water"""
+        plain_text = """
+        Name: Jane Doe 
+        Date: 3/9/2025
+        Telephone: 214.920.9999
+        Physician: Sarah Connor
+        Physician phone: 888.777.6666
+        Height: 69 inches
+        Weight: 150 lbs
+        DOB: 09/09/1979
+        Age: 46 years
+        Sex: Female
+        Activity Level: Active
+        
+        24-hr Diet Recall
+        Time	Place	Amount	Food Description	Notes
+        8 am	Kitchen	¾ cup	Raisin Bran
+                ½ cup	Apple juice
+                1 medium	Fresh peach
+        12 pm	Dining table	½ cup	Ground beef
+                1 cup	Mushroom stew
+                ½ cup	Rice
+                ¼ cup	Green beans
+                8 oz	Water
+        4 pm	Kitchen	½ cup	Pretzels
+                1 oz	Chocolate
+        7 pm	Dining table	1 cup	Spaghetti
+                ½ cup	Ground beef
+                8 oz	Water"""
         self.ui.plainTextEdit_dietary_recall.setPlainText(plain_text)
         self.output_json_str = None # LLM output from user input
 
         # define user inputs and responses in gui
         self.ui.pushButton_calculate.clicked.connect(self.calculate)
-        self.ui.tabWidget.tabBarClicked.connect(self.tab_results)
         self.ui.browse_pdf_file.clicked.connect(self.load_pdf_file)
 
     def load_pdf_file(self):
@@ -77,13 +77,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         else:
             # cover edge case so textbox is available if user changes mind about inputs
             self.ui.plainTextEdit_dietary_recall.setDisabled(False)
-
-
-    def tab_results(self):
-
-        # LLM parsed data
-        # print('self.output_json_str:  \n', self.output_json_str)
-        print('Tab changed.')
 
     def calculate(self):
 
@@ -109,11 +102,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # run calculator based on input data (option 1 or option 2)
         if self.ui.file_path_selected_pdf.toPlainText() == '':
             # user chooses option 1. to input freetext data
-            print('filepath:\n', self.ui.file_path_selected_pdf.toPlainText())
             get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText()) # returns json file in results directory
         else:
             # user chooses option 2. to input pdf file
-            print('filepath:\n', self.ui.file_path_selected_pdf.toPlainText())
             get_json(self.ui.file_path_selected_pdf.toPlainText())
 
         # compute DRI, patient nutrition needs
@@ -122,7 +113,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # compute nutrition intake
         # AND create nutrition tables in results directory
-        calculate_nutrient_intake()
+        calculate_nutrient_intake() # creates all necessary excel tables for below.
         compare_nutrient_intake_and_needs(result_dri_df) # produces 'Nutrition_Intake_vs_Needs.csv'
         print('DRI and intake calculations completed')
 
@@ -132,6 +123,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         df_macronutrients = results_df.iloc[0:10][['Nutrition', 'Intake_Amount', 'Need_Amount']]
         df_vitamins = results_df.iloc[11:24][['Nutrition', 'Intake_Amount', 'Need_Amount']]
         df_essential_minerals = results_df.iloc[24:39][['Nutrition', 'Intake_Amount', 'Need_Amount']]
+        df_calories = results_df.iloc[39][['Nutrition', 'Intake_Amount', 'Need_Amount']]
 
         # Set Table for Macronutrients in GUI
         for row in range(df_macronutrients.shape[0]):
@@ -154,24 +146,44 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 self.ui.tableWidget_essential_minerals.setItem(row, col, item)
         self.ui.tableWidget_essential_minerals.update()
 
+        # populate Summary of Results section
+        import json
+        with open('results/llm_output_data.json', 'r') as file:
+            patient_dict = json.load(file)
+            print('PATIENT DICTIONARY:\n', patient_dict)
+
+        patient_name = patient_dict['patient']['name']
+
+        patient_intake = str(df_calories['Intake_Amount'])
+        patient_needs = str(df_calories['Need_Amount'])
+
+        summary_of_results_str = f"Based on the 24 hr dietary recall, {patient_name} consumed {patient_intake} kcal."
+        print('summary_of_results_str:', type(summary_of_results_str))
+        print('summary_of_results_str:', summary_of_results_str)
+
+        # send a signal back to update GUI summary page
+        self.summary_string = summary_of_results_str
+
         # Enable results tab
         self.ui.tabWidget.setTabEnabled(1, True)
         self.ui.tabWidget.setCurrentIndex(1) # automatically show to results tab
 
+    class WorkerSignals(QObject):
+        finished = pyqtSignal(str)
+
+    def update_result_summary_page(self, result):
+        print('RESULT SUMMARY:\n', result)
+        self.ui.textBrowser_is_patient_nutrient_deficient.setText(result)
+        self.ui.textBrowser_is_patient_nutrient_deficient.update()
+
     def start_DRI_calculator_thread(self):
         worker = self.Worker_DRI_calculator(self, self.ui)
+        print('STARTING: DRI calculator thread')
         self.threadpool.start(worker)
-        print('DRI calculator thread started')
 
-    # def start_nutrient_intake_calculator_thread(self):
-    #     worker = self.Worker_nutrient_intake_calculator()
-    #     self.threadpool.start(worker)
-    #     print('STARTED: nutrient intake calculator thread')
+        # connect finished singal to outside function
+        worker.signals.finished.connect(self.update_result_summary_page)
 
-    # def start_llm_parser_thread(self):
-    #     worker = self.Worker_llm_parser(self, self.ui)
-    #     self.threadpool.start(worker)
-    #     print('STARTED: start_llm_parser_thread')
 
     def start_rd_chatbot_thread(self):
         worker = self.Worker_rd_chatbot()
@@ -179,7 +191,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         #allow streamlit (chatbot) thread to load before connecting to GUI
         import time
-        time.sleep(0.5)
+        time.sleep(1)
 
         print('Loading chatbot into gui.')
         from PyQt5.QtCore import QUrl
@@ -192,50 +204,28 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             super().__init__()
             self.main = main
             self.ui = ui
+            self.signals = self.main.WorkerSignals()
         @pyqtSlot()
         def run(self):
+
             print('STARTED: DRI calculator')
             self.main.DRI_calculator()
+            print('COMPLETED: DRI calculator')
 
-    # class Worker_nutrient_intake_calculator(QRunnable):
-    #     def __init__(self):
-    #         super().__init__()
-    #     @pyqtSlot()
-    #     def run(self):
-    #         print('STARTED: nutrient intake calculator')
-    #         calculate_nutrient_intake("Intake.txt")
-    #         print('COMPLETED: nutrient intake calculator')
-
-    # class Worker_llm_parser(QRunnable):
-    #     def __init__(self, main, ui):
-    #         super().__init__()
-    #         self.main = main
-    #         self.ui = ui
-    #     @pyqtSlot()
-    #     def run(self):
-    #         print('STARTED: Worker_llm_parser')
-    #         # pass output back to man gui.
-    #         self.main.output_json_str = get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText())
-    #         print('COMPLETED: Worker_llm_parser')
+            # send signal to populate summary page
+            self.signals.finished.emit(self.main.summary_string)
 
     class Worker_rd_chatbot(QRunnable):
         def __init__(self):
             super().__init__()
         @pyqtSlot()
         def run(self):
-
             # run streamlit RD chatbot
             print('STARTED: Robo_dietitian')
-            # rd_chatbot = "python -m streamlit run robo_dietician.py --server.headless true"
-            # os.system(rd_chatbot)
-
             import subprocess
-            # cmd_string = "python -m streamlit run robo_dietician.py --theme.base='dark' --server.headless=true"
-            # process = subprocess.run(cmd_string, shell=True)
             process = subprocess.run(
                 ["python", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true",
                  "--server.port=8515"],)
-
             print('COMPLETED: Robo_dietitian')
 
     # def closeEvent(self):
