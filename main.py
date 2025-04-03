@@ -95,8 +95,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         if os.path.exists(file_path):
             os.remove(file_path)
             print(f"File {file_path} deleted successfully.")
-        else:
-            print('STARTED: calculate push button')
 
         # Step 1: Intialize RD Chatbot.
         self.start_rd_chatbot_thread()
@@ -105,7 +103,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.start_DRI_calculator_thread()
         # self.start_nutrient_intake_calculator_thread()
 
-        print('COMPLETED: calculate push button')
 
     def DRI_calculator(self):
 
@@ -179,7 +176,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         import json
         with open('results/llm_output_data.json', 'r') as file:
             patient_dict = json.load(file)
-            print('PATIENT DICTIONARY:\n', patient_dict)
 
         patient_name = patient_dict['patient']['name']
 
@@ -194,8 +190,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         summary_of_results_str = (f"Based on the 24 hr dietary recall, {patient_name} consumed {patient_caloric_intake} "
                                   f"of the recommended {patient_caloric_need}. {patient_name} is deficient in "
                                   f"{deficient_nutrients}.")
-        print('summary_of_results_str:', type(summary_of_results_str))
-        print('summary_of_results_str:', summary_of_results_str)
 
         # send a signal back to update GUI summary page
         self.summary_string = summary_of_results_str
@@ -203,6 +197,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # Enable results tab
         self.ui.tabWidget.setTabEnabled(1, True)
         self.ui.tabWidget.setCurrentIndex(1) # automatically show to results tab
+
+        print('COMPLETED: Analysis')
 
     class WorkerSignals(QObject):
         finished = pyqtSignal(str)
@@ -218,7 +214,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def start_DRI_calculator_thread(self):
         worker = self.Worker_DRI_calculator(self, self.ui)
-        print('STARTING: DRI calculator thread')
         self.threadpool.start(worker)
 
         # connect finished singal to outside function
@@ -248,9 +243,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         @pyqtSlot()
         def run(self):
 
-            print('STARTED: DRI calculator')
             self.main.DRI_calculator()
-            print('COMPLETED: DRI calculator')
 
             # send signal to populate summary page
             self.signals.finished.emit(self.main.summary_string)
