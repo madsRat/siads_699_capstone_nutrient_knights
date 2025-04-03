@@ -166,7 +166,6 @@ def extract_intake_amounts():
     import json
     with open('results/llm_output_data.json', 'r') as file:
         data = json.load(file)
-        print('PATIENT DICTIONARY:\n', data)
 
     # Process and convert food items
     converted_foods = []
