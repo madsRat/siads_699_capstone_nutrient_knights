@@ -88,8 +88,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def calculate(self):
 
         # change color of button to indicate work in progress
+        self.ui.pushButton_calculate.setEnabled(False)  # prevent user from double clicking
         self.ui.pushButton_calculate.setText('Calculating...')
         self.ui.pushButton_calculate.setStyleSheet("background-color: green;")
+
+
+        # keep user in analysis tab so tables can populate correctly
+        self.ui.tabWidget.setTabEnabled(1, False)
+        self.ui.tabWidget.setCurrentIndex(0) # automatically show to analysis tab
 
         # clear previous results page
         self.ui.textBrowser_is_patient_nutrient_deficient.setText('')
@@ -204,6 +210,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # Enable results tab
         self.ui.tabWidget.setTabEnabled(1, True)
         self.ui.tabWidget.setCurrentIndex(1) # automatically show to results tab
+        self.ui.pushButton_calculate.setEnabled(True) # re enable calculate push button
 
         print('COMPLETED: Analysis')
 
