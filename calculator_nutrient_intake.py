@@ -1,16 +1,11 @@
 import pandas as pd
+import numpy as np
 import requests
 import json
 from pathlib import Path
 
-
 def create_nutrient_table():
     # find food list from intake json file
-
-    # # Load JSON data from file
-    # file_path = llm_output_json  # "Intake.txt"  # Update with the correct path
-    # with open(file_path, "r", encoding="utf-8") as file:
-    #     data = json.load(file)
 
     import json
     with open('results/llm_output_data.json', 'r') as file:
@@ -336,7 +331,12 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     # merged_df = pd.merge(needs_df, intake_df, on="Nutrition", how="left")
     merged_df = pd.merge(needs_df, intake_df, on="Nutrition", how="left").drop(columns=["Unnamed: 0"], errors="ignore")
 
-    merged_df["Deviation"] = merged_df["Need_Amount"] - merged_df["Amount"]
+    # data cleaning
+    merged_df['Amount'] = merged_df['Amount'].fillna(0) # replace nan with 0 intake
+    # replace missing intake units with needs units.
+    merged_df['Intake_Unit'] = np.where(merged_df['Intake_Unit'].isnull(), merged_df['Need_Unit'], merged_df['Intake_Unit'])
+
+    merged_df["Deviation"] = merged_df["Amount"] - merged_df["Need_Amount"]
     # Round all numeric columns to 1 decimal point
     numeric_cols = merged_df.select_dtypes(include=["float64", "int64"]).columns
     merged_df[numeric_cols] = merged_df[numeric_cols].round(1)

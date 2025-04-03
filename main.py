@@ -130,15 +130,20 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # read results table from 'Nutrition_Intake_vs_Needs.csv'
         results_df = pd.read_csv(r'results/Nutrition_Intake_vs_Needs.csv')
 
-        df_macronutrients = results_df.iloc[0:10][['Nutrition', 'Intake_Amount', 'Need_Amount']]
-        df_vitamins = results_df.iloc[11:24][['Nutrition', 'Intake_Amount', 'Need_Amount']]
-        df_essential_minerals = results_df.iloc[24:39][['Nutrition', 'Intake_Amount', 'Need_Amount']]
-        df_calories = results_df.iloc[39][['Nutrition', 'Intake_Amount', 'Need_Amount']]
+        # add units to table
+        results_df['intake'] = results_df.apply(lambda row: f"{row['Intake_Amount']} {row['Intake_Unit']}", axis=1)
+        results_df['need'] = results_df.apply(lambda row: f"{row['Need_Amount']} {row['Need_Unit']}", axis=1)
+
+        df_macronutrients = results_df.iloc[0:10][['Nutrition', 'intake', 'need']]
+        df_vitamins = results_df.iloc[11:24][['Nutrition', 'intake', 'need']]
+        df_essential_minerals = results_df.iloc[24:39][['Nutrition', 'intake', 'need']]
+        df_calories = results_df.iloc[39][['Nutrition', 'intake', 'need']]
 
         # Set Table for Macronutrients in GUI
         for row in range(df_macronutrients.shape[0]):
             for col in range(df_macronutrients.shape[1]):
                 item = QTableWidgetItem(str(df_macronutrients.iloc[row, col]))
+                print(type(df_macronutrients.iloc[row, col]), df_macronutrients.iloc[row, col])
                 self.ui.tableWidget_macronutrients.setItem(row, col, item)
         self.ui.tableWidget_macronutrients.update()
 
@@ -164,10 +169,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         patient_name = patient_dict['patient']['name']
 
-        patient_intake = str(df_calories['Intake_Amount'])
-        patient_needs = str(df_calories['Need_Amount'])
+        patient_intake = str(df_calories['intake'])
+        patient_needs = str(df_calories['need'])
 
-        summary_of_results_str = f"Based on the 24 hr dietary recall, {patient_name} consumed {patient_intake} kcal."
+        summary_of_results_str = f"Based on the 24 hr dietary recall, {patient_name} consumed {patient_intake}."
         print('summary_of_results_str:', type(summary_of_results_str))
         print('summary_of_results_str:', summary_of_results_str)
 
@@ -182,7 +187,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         finished = pyqtSignal(str)
 
     def update_result_summary_page(self, result):
-        print('RESULT SUMMARY:\n', result)
+
         self.ui.textBrowser_is_patient_nutrient_deficient.setText(result)
         self.ui.textBrowser_is_patient_nutrient_deficient.update()
 
