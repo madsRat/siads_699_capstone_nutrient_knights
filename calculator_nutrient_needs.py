@@ -1,6 +1,8 @@
 import pandas as pd
 import re
+from code_profiler import timeit
 
+@timeit
 def parse_amount_unit(value):
     splitted = value.split()
     if len(splitted) == 2:
@@ -15,6 +17,7 @@ def parse_amount_unit(value):
         print('parse_amount_unit: value is None.')
     return val, unit
 
+@timeit
 def preprocess_anthropometrics():
 
     import json
@@ -146,6 +149,7 @@ def basal_metabolic_rate(patient_anthropometrics, df):
 
     return round(bmr_adjusted, 2)
 
+@timeit
 def calculate_patient_needs(patient_anthropometrics):
 
     # import DRI Tables

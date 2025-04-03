@@ -1,4 +1,8 @@
+import os
 
+from code_profiler import timeit
+
+@timeit
 def get_json_plaintext(plaintxt):
     import os
     from langchain import hub
@@ -122,19 +126,15 @@ def get_json_plaintext(plaintxt):
 
     json_txt = extract_json(result) # content_string
 
-    print('LLM OUTPUT RESULT: \n', type(json_txt))
-    print('LLM OUTPUT RESULT: \n', json_txt)
-
     import json
     python_dict = json.loads(json_txt)
-    print('PYTHON DICT:', type(python_dict))
-    print('PYTHON DICT:', python_dict)
 
     with open('results/llm_output_data.json', 'w') as outfile:
         json.dump(python_dict, outfile, indent=4)
         print('JSON FILE EXPORTED')
     return None
 
+@timeit
 def get_json(pdf_file_path):
     json = ''
     system_prompt = """Create a JSON for the information available in the document. Include all information in the JSON.
@@ -251,23 +251,17 @@ def get_json(pdf_file_path):
     model="gpt-4o-mini"
     result = get_llm_response(pdf_file_path, model, system_prompt).content
 
-    print('RESULT: \n', result)
-
     json_txt = extract_json(result) # content_string
-
-    print('LLM OUTPUT RESULT: \n', type(json_txt))
-    print('LLM OUTPUT RESULT: \n', json_txt)
 
     import json
     python_dict = json.loads(json_txt)
-    print('PYTHON DICT:', type(python_dict))
-    print('PYTHON DICT:', python_dict)
 
     with open('results/llm_output_data.json', 'w') as outfile:
         json.dump(python_dict, outfile, indent=4)
         print('JSON FILE EXPORTED')
     return None
 
+@timeit
 def get_food_json(pdf_file_path):
     json = ''
     system_prompt = """Create a JSON for the food description and amount. Do not include other information in the JSON."""
@@ -282,6 +276,7 @@ def get_food_json(pdf_file_path):
 
     return json
 
+@timeit
 def get_llm_response(pdf_file_path, model, system_prompt):
     import os
     from langchain_community.document_loaders import PyPDFLoader
@@ -317,6 +312,7 @@ def get_llm_response(pdf_file_path, model, system_prompt):
 
     return llm.invoke(prompt)
 
+@timeit
 def extract_json(text):
     import re
     

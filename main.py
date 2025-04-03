@@ -13,6 +13,7 @@ from nutrient_analysis import Ui_main_window
 from GetJsonFromLlm import get_json_plaintext, get_json
 from calculator_nutrient_intake import calculate_nutrient_intake, compare_nutrient_intake_and_needs
 from calculator_nutrient_needs import preprocess_anthropometrics, calculate_patient_needs
+from code_profiler import timeit
 
 import sys
 import os
@@ -103,7 +104,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.start_DRI_calculator_thread()
         # self.start_nutrient_intake_calculator_thread()
 
-
+    @timeit
     def DRI_calculator(self):
 
         # run calculator based on input data (option 1 or option 2)

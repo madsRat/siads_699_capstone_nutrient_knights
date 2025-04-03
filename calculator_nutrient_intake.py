@@ -3,7 +3,9 @@ import numpy as np
 import requests
 import json
 from pathlib import Path
+from code_profiler import timeit
 
+@timeit
 def create_nutrient_table():
     # find food list from intake json file
 
@@ -74,6 +76,7 @@ def create_nutrient_table():
     filepath = Path(r"results/nutrition_table.csv")
     df.to_csv(filepath)
 
+@timeit
 def separate_units_from_table(nutrition_table):
     # seperate unit and amount for nutrition_table
 
@@ -116,6 +119,7 @@ def separate_units_from_table(nutrition_table):
     filepath = Path(r"results/food_nutrition_table.csv")
     df.to_csv(filepath)
 
+@timeit
 def extract_intake_amounts():
     # load food intake json file again to get food intake, convert unit to ml or g
 
@@ -201,6 +205,7 @@ def extract_intake_amounts():
     filepath = Path(r"results/food_summary.csv")
     df_food_summary.to_csv(filepath)
 
+@timeit
 def tally_nutrients(food_summary_table, food_nutrition_table):
     # Sum nutrition
 
@@ -244,6 +249,7 @@ def tally_nutrients(food_summary_table, food_nutrition_table):
     filepath = Path(r"results/nutrition_total_intake.csv")
     df_nutrition_summary.to_csv(filepath)
 
+@timeit
 def create_mapped_nutrient_table():
     # Define the ordered Need_Nutrition list
     ordered_need_nutrition = [
@@ -312,6 +318,7 @@ def create_mapped_nutrient_table():
     filepath = Path(r"results/Ordered_Mapped_Nutrients.csv")
     ordered_df.to_csv(filepath, index=False)
 
+@timeit
 def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, ordered_mapped_nutrients):
     # Load the uploaded CSV files
     intake_df = pd.read_csv(nutrition_total_intake)
@@ -345,15 +352,20 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     filepath = Path(r"results/Nutrition_Intake_vs_Needs.csv")
     merged_df.to_csv(filepath, index=False)
 
+@timeit
 def calculate_nutrient_intake():
     # chain all functions above and create nutrient intake table
+
+    # TODO feed results into chatbot
+
     create_nutrient_table()
     separate_units_from_table("results/nutrition_table.csv")
     extract_intake_amounts()
     tally_nutrients("results/food_summary.csv", "results/food_nutrition_table.csv")
+
     return None
 
-# TODO use mapped nutrition tables to send (macronutrients, vitamins, essential minearls tables) to main gui
+@timeit
 def compare_nutrient_intake_and_needs(patient_nutrient_needs):
     # get_patient_nutrient_needs(patient_nutrient_needs)
     # prepare final table
