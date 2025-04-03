@@ -3,7 +3,6 @@ import pandas as pd
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThreadPool, QThread, QRunnable
-
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -11,7 +10,7 @@ from aiohttp import worker
 
 from nutrient_analysis import Ui_main_window
 from GetJsonFromLlm import get_json_plaintext, get_json
-from calculator_nutrient_intake import calculate_nutrient_intake, compare_nutrient_intake_and_needs
+from calculator_nutrient_intake import calculate_nutrient_intake, compare_nutrient_intake_and_needs, extract_nutrition
 from calculator_nutrient_needs import preprocess_anthropometrics, calculate_patient_needs
 from code_profiler import timeit
 
@@ -23,8 +22,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         super(ApplicationWindow, self).__init__()
         self.ui = Ui_main_window()
         self.ui.setupUi(self)
+
         self.threadpool = QThreadPool()
-        self.threadpool.setMaxThreadCount(4)
+        self.max_threads = QThread.idealThreadCount()
+        self.threadpool.setMaxThreadCount(self.max_threads)
+
+        self.threadpool_extract_nutrients = QThreadPool()
+        self.threadpool_extract_nutrients.setMaxThreadCount(self.max_threads)
+
+        print(f'Running with max {self.max_threads} threads.')
 
         # set default inputs for testing code
         plain_text = """
@@ -125,7 +131,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # compute nutrition intake
         # AND create nutrition tables in results directory
         print('STARTED: Intake calculator')
-        calculate_nutrient_intake() # creates all necessary excel tables for below.
+        calculate_nutrient_intake(self) # creates all necessary excel tables for below.
         compare_nutrient_intake_and_needs(result_dri_df) # produces 'Nutrition_Intake_vs_Needs.csv'
         print('COMPLETED: Intake calculator')
 

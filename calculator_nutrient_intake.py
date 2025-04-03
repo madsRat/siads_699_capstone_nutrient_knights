@@ -5,8 +5,15 @@ import json
 from pathlib import Path
 from code_profiler import timeit
 
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import QThreadPool, QThread, QRunnable
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+
 @timeit
-def create_nutrient_table():
+def create_nutrient_table(self):
+    global nutrient_data
     # find food list from intake json file
 
     import json
@@ -38,36 +45,12 @@ def create_nutrient_table():
             "requireAllWords": True,
         }
 
-        try:
-            response = requests.post(f"{search_url}?api_key={API_KEY}", json=payload, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-            foods = data.get("foods", [])
-            if not foods:
-                continue
+        # extract_nutrition(search_url, API_KEY, headers, payload, food)
+        worker = Worker_extract_nutrition(search_url, API_KEY, headers, payload, food)
+        self.threadpool_extract_nutrients.start(worker)
 
-            first_fdc_id = foods[0]["fdcId"]
-            detail_url = f"https://api.nal.usda.gov/fdc/v1/food/{first_fdc_id}?api_key={API_KEY}"
-            response = requests.get(detail_url)
-            response.raise_for_status()
+    self.threadpool_extract_nutrients.waitForDone()
 
-            food_data = response.json()
-            food_name = food_data.get("description", food)
-
-            for nutrient in food_data.get("foodNutrients", []):
-                name = nutrient["nutrient"]["name"]
-                amount = nutrient.get("amount")
-                unit = nutrient["nutrient"]["unitName"]
-                label = f"{amount} {unit}" if amount is not None else "N/A"
-
-                if name not in nutrient_data:
-                    nutrient_data[name] = {}
-                nutrient_data[name][food] = label
-
-        except Exception as e:
-            print(f"Error processing {food}: {e}")
-            continue
-    # print(nutrient_data)
     # Create DataFrame
     df = pd.DataFrame(nutrient_data).T
     df.index.name = "Nutrition"
@@ -75,6 +58,53 @@ def create_nutrient_table():
     # export table to results directory
     filepath = Path(r"results/nutrition_table.csv")
     df.to_csv(filepath)
+
+    return None
+
+class Worker_extract_nutrition(QRunnable):
+    def __init__(self, search_url, API_KEY, headers, payload, food):
+        super().__init__()
+        self.search_url = search_url
+        self.API_KEY = API_KEY
+        self.headers = headers
+        self.payload = payload
+        self.food = food
+    @pyqtSlot()
+    def run(self):
+        extract_nutrition(self.search_url, self.API_KEY, self.headers, self.payload, self.food)
+
+
+def extract_nutrition(search_url, API_KEY, headers, payload, food):
+    global nutrient_data
+
+    try:
+        response = requests.post(f"{search_url}?api_key={API_KEY}", json=payload, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        foods = data.get("foods", [])
+        if not foods:
+            return None
+
+        first_fdc_id = foods[0]["fdcId"]
+        detail_url = f"https://api.nal.usda.gov/fdc/v1/food/{first_fdc_id}?api_key={API_KEY}"
+        response = requests.get(detail_url)
+        response.raise_for_status()
+
+        food_data = response.json()
+        food_name = food_data.get("description", food)
+
+        for nutrient in food_data.get("foodNutrients", []):
+            name = nutrient["nutrient"]["name"]
+            amount = nutrient.get("amount")
+            unit = nutrient["nutrient"]["unitName"]
+            label = f"{amount} {unit}" if amount is not None else "N/A"
+
+            if name not in nutrient_data:
+                nutrient_data[name] = {}
+            nutrient_data[name][food] = label
+
+    except Exception as e:
+        print(f"Error processing {food}: {e}")
 
 @timeit
 def separate_units_from_table(nutrition_table):
@@ -353,12 +383,12 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     merged_df.to_csv(filepath, index=False)
 
 @timeit
-def calculate_nutrient_intake():
+def calculate_nutrient_intake(self):
     # chain all functions above and create nutrient intake table
 
     # TODO feed results into chatbot
 
-    create_nutrient_table()
+    create_nutrient_table(self)
     separate_units_from_table("results/nutrition_table.csv")
     extract_intake_amounts()
     tally_nutrients("results/food_summary.csv", "results/food_nutrition_table.csv")
