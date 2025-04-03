@@ -119,46 +119,60 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # compute DRI, patient nutrition needs
         patient_anthropometrics = preprocess_anthropometrics()
+
+        print('STARTED: DRI calculator')
         result_dri_df = calculate_patient_needs(patient_anthropometrics)
+        print('COMPLETED: DRI calculator')
 
         # compute nutrition intake
         # AND create nutrition tables in results directory
+        print('STARTED: Intake calculator')
         calculate_nutrient_intake() # creates all necessary excel tables for below.
         compare_nutrient_intake_and_needs(result_dri_df) # produces 'Nutrition_Intake_vs_Needs.csv'
-        print('DRI and intake calculations completed')
+        print('COMPLETED: Intake calculator')
 
         # read results table from 'Nutrition_Intake_vs_Needs.csv'
         results_df = pd.read_csv(r'results/Nutrition_Intake_vs_Needs.csv')
+
+        results_df['Deviation'] = results_df['Deviation'].astype(float) # needed for identifying deficiencies and tagging
 
         # add units to table
         results_df['intake'] = results_df.apply(lambda row: f"{row['Intake_Amount']} {row['Intake_Unit']}", axis=1)
         results_df['need'] = results_df.apply(lambda row: f"{row['Need_Amount']} {row['Need_Unit']}", axis=1)
 
-        df_macronutrients = results_df.iloc[0:10][['Nutrition', 'intake', 'need']]
-        df_vitamins = results_df.iloc[11:24][['Nutrition', 'intake', 'need']]
-        df_essential_minerals = results_df.iloc[24:39][['Nutrition', 'intake', 'need']]
-        df_calories = results_df.iloc[39][['Nutrition', 'intake', 'need']]
+        df_macronutrients = results_df.iloc[0:10][['Nutrition', 'intake', 'need', 'Deviation']]
+        df_vitamins = results_df.iloc[11:24][['Nutrition', 'intake', 'need', 'Deviation']]
+        df_essential_minerals = results_df.iloc[24:39][['Nutrition', 'intake', 'need', 'Deviation']]
+        df_calories = results_df.iloc[39][['Nutrition', 'intake', 'need', 'Deviation']]
+
+        from PyQt5.QtGui import QColor
 
         # Set Table for Macronutrients in GUI
         for row in range(df_macronutrients.shape[0]):
-            for col in range(df_macronutrients.shape[1]):
+            for col in range(df_macronutrients.shape[1]-1): # minus -1 to ignore deviation col, but use to color row
                 item = QTableWidgetItem(str(df_macronutrients.iloc[row, col]))
-                print(type(df_macronutrients.iloc[row, col]), df_macronutrients.iloc[row, col])
                 self.ui.tableWidget_macronutrients.setItem(row, col, item)
+                if df_macronutrients['Deviation'].iloc[row] < 0:# change color to red if nutrient deficient
+                    item.setBackground(QColor(139, 0, 0))
+
         self.ui.tableWidget_macronutrients.update()
 
         # Set Table for Vitamins in GUI
         for row in range(df_vitamins.shape[0]):
-            for col in range(df_vitamins.shape[1]):
+            for col in range(df_vitamins.shape[1]-1):# minus -1 to ignore deviation col, but use to color row
                 item = QTableWidgetItem(str(df_vitamins.iloc[row, col]))
                 self.ui.tableWidget_micronutrients.setItem(row, col, item)
+                if df_vitamins['Deviation'].iloc[row] < 0:# change color to red if nutrient deficient
+                    item.setBackground(QColor(139, 0, 0))
         self.ui.tableWidget_micronutrients.update()
 
         # Set Table for Essential Minerals in GUI
         for row in range(df_essential_minerals.shape[0]):
-            for col in range(df_essential_minerals.shape[1]):
+            for col in range(df_essential_minerals.shape[1]-1):# minus -1 to ignore deviation col, but use to color row
                 item = QTableWidgetItem(str(df_essential_minerals.iloc[row, col]))
                 self.ui.tableWidget_essential_minerals.setItem(row, col, item)
+                if df_essential_minerals['Deviation'].iloc[row] < 0: # change color to red if nutrient deficient
+                    item.setBackground(QColor(139, 0, 0))
         self.ui.tableWidget_essential_minerals.update()
 
         # populate Summary of Results section
@@ -169,10 +183,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         patient_name = patient_dict['patient']['name']
 
-        patient_intake = str(df_calories['intake'])
-        patient_needs = str(df_calories['need'])
+        # gather all data for summary block
+        patient_caloric_intake = str(df_calories['intake'])
+        patient_caloric_need = str(df_calories['need'])
 
-        summary_of_results_str = f"Based on the 24 hr dietary recall, {patient_name} consumed {patient_intake}."
+        deficient_bool_mask = results_df['Deviation'] < 0
+        deficient_rows = results_df[deficient_bool_mask]
+        deficient_nutrients = deficient_rows['Nutrition'].tolist()
+
+        summary_of_results_str = (f"Based on the 24 hr dietary recall, {patient_name} consumed {patient_caloric_intake} "
+                                  f"of the recommended {patient_caloric_need}. {patient_name} is deficient in "
+                                  f"{deficient_nutrients}.")
         print('summary_of_results_str:', type(summary_of_results_str))
         print('summary_of_results_str:', summary_of_results_str)
 
