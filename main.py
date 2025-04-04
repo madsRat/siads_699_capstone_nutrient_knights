@@ -234,22 +234,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # connect finished singal to outside function
         worker.signals.finished.connect(self.update_result_summary_page)
 
-    def load_chatbot(self, result):
+    # def load_chatbot(self, result):
+    #
+    #     # import time
+    #     # time.sleep(1)
+    #     #
+    #     # print('Loading chatbot into gui.')
+    #     # from PyQt5.QtCore import QUrl
+    #     # self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8515"))
+    #     # self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
+    #     # print('loaded chatbot successfully into gui.')
+
+    def start_rd_chatbot_thread(self):
+        worker = self.Worker_rd_chatbot(self)
+        self.threadpool.start(worker)
+        # worker.signals.finished.connect(self.load_chatbot)
 
         import time
-        time.sleep(0.5)
+        time.sleep(1)
 
-        print(result)
         print('Loading chatbot into gui.')
         from PyQt5.QtCore import QUrl
         self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8515"))
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
-
-    def start_rd_chatbot_thread(self):
-        worker = self.Worker_rd_chatbot(self)
-        self.threadpool.start(worker)
-        worker.signals.finished.connect(self.load_chatbot)
 
     class Worker_DRI_calculator(QRunnable):
         def __init__(self, main, ui):
@@ -275,16 +283,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             # run streamlit RD chatbot
             print('STARTED: Robo_dietitian')
 
-            # send signal to indicate started
-            self.signals.finished.emit('Started.')
+            user_input = self.main.summary_string
+            print('USER INPUT:', user_input)
 
             import subprocess
             process = subprocess.run(
-                ["python", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true",
+                ["python", "-m", "streamlit", "run", "robo_dietician.py", user_input, "--theme.base=dark", "--server.headless=true",
                  "--server.port=8515"],)
             print('COMPLETED: Robo_dietitian')
-
-
 
     # def closeEvent(self):
     #     print('Closing Robo_dietitian')
