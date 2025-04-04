@@ -1,17 +1,21 @@
 import streamlit as st
 import os
+import pandas as pd
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
+
 # initialize chat history
-system_prompt = '''You are an expert dietitian. You respond to patient diet related queries. Ask relevant counter questions to get additional information where necessary. 
-    Politely refuse to answer questions that are not related to patient diet. Mention that you are an AI dietician and recommend user to review the responses with a 
+setup_prompt = '''You are an expert dietitian. You respond to patient diet related queries. Ask relevant counter questions to get additional information where necessary. 
+    Politely refuse to answer questions that are not related to patient diet. Mention that you are an AI dietitian and recommend user to review the responses with a 
     human expert. Use three sentences maximum and keep the answer concise.'''
-    
+
+system_prompt = setup_prompt #+ data_prompt
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    
+
     st.session_state.messages.append(SystemMessage(system_prompt))
 
 # display chat messages from history on app rerun
@@ -48,3 +52,12 @@ if prompt:
         st.markdown(result)
 
         st.session_state.messages.append(AIMessage(result))
+
+# run_Robo_Dietitian()
+
+# if __name__ == '__main__':
+#     # if len(sys.argv) > 1:
+#     #     input_value = sys.argv[1]
+#     # else:
+#     #     input_value = ""
+#     run_Robo_Dietitian()

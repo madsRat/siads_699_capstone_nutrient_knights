@@ -109,12 +109,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             os.remove(file_path)
             print(f"File {file_path} deleted successfully.")
 
-        # Step 1: Intialize RD Chatbot.
-        self.start_rd_chatbot_thread()
+        # # Step 1: Intialize RD Chatbot.
+        # self.start_rd_chatbot_thread()
 
         # Step 2: Extract data from RD Inputs AND Run Nutrition Calculators
         self.start_DRI_calculator_thread()
-        # self.start_nutrient_intake_calculator_thread()
 
     @timeit
     def DRI_calculator(self):
@@ -226,6 +225,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.pushButton_calculate.setText('Calculate')
         self.ui.pushButton_calculate.setStyleSheet("background-color: gray;")
 
+        self.start_rd_chatbot_thread()
+
     def start_DRI_calculator_thread(self):
         worker = self.Worker_DRI_calculator(self, self.ui)
         self.threadpool.start(worker)
@@ -233,20 +234,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # connect finished singal to outside function
         worker.signals.finished.connect(self.update_result_summary_page)
 
-
-    def start_rd_chatbot_thread(self):
-        worker = self.Worker_rd_chatbot()
-        self.threadpool.start(worker)
-
-        #allow streamlit (chatbot) thread to load before connecting to GUI
-        import time
-        time.sleep(1)
-
+    def load_chatbot(self, result):
+        print(result)
         print('Loading chatbot into gui.')
         from PyQt5.QtCore import QUrl
         self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8515"))
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
+
+    def start_rd_chatbot_thread(self):
+        worker = self.Worker_rd_chatbot(self)
+        self.threadpool.start(worker)
+        worker.signals.finished.connect(self.load_chatbot)
 
     class Worker_DRI_calculator(QRunnable):
         def __init__(self, main, ui):
@@ -263,8 +262,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.signals.finished.emit(self.main.summary_string)
 
     class Worker_rd_chatbot(QRunnable):
-        def __init__(self):
+        def __init__(self, main):
             super().__init__()
+            self.main = main
+            self.signals = self.main.WorkerSignals()
         @pyqtSlot()
         def run(self):
             # run streamlit RD chatbot
@@ -274,6 +275,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 ["python", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true",
                  "--server.port=8515"],)
             print('COMPLETED: Robo_dietitian')
+
+            # send signal to indicate complete
+            self.signals.finished.emit('Completed.')
 
     # def closeEvent(self):
     #     print('Closing Robo_dietitian')
