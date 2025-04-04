@@ -235,6 +235,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         worker.signals.finished.connect(self.update_result_summary_page)
 
     def load_chatbot(self, result):
+
+        import time
+        time.sleep(0.5)
+
         print(result)
         print('Loading chatbot into gui.')
         from PyQt5.QtCore import QUrl
@@ -270,14 +274,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         def run(self):
             # run streamlit RD chatbot
             print('STARTED: Robo_dietitian')
+
+            # send signal to indicate started
+            self.signals.finished.emit('Started.')
+
             import subprocess
             process = subprocess.run(
                 ["python", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true",
                  "--server.port=8515"],)
             print('COMPLETED: Robo_dietitian')
 
-            # send signal to indicate complete
-            self.signals.finished.emit('Completed.')
+
 
     # def closeEvent(self):
     #     print('Closing Robo_dietitian')
