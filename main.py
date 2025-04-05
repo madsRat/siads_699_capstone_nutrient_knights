@@ -6,7 +6,7 @@ from PyQt5.QtCore import QThreadPool, QThread, QRunnable
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from aiohttp import worker
+# from aiohttp import worker
 
 from nutrient_analysis import Ui_main_window
 from GetJsonFromLlm import get_json_plaintext, get_json

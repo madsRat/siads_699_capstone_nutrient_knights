@@ -63,5 +63,3 @@ if __name__ == '__main__':
     else:
         input_value = ""
     run_Robo_Dietitian(input_value)
-
-# TODO implement above to incldue arguments in command line run in main.py
