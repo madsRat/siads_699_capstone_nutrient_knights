@@ -106,11 +106,13 @@ def preprocess_anthropometrics():
             'low_active': 'low_active',
             'low active': 'low_active',
             'not very active': 'low_active',
+            'low': 'low_active',
 
             'active': 'active',
 
             'very_active': 'very_active',
             'very active': 'very_active',
+            'very': 'very_active',
 
             'male': 'male',
             'm': 'male',

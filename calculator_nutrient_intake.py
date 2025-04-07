@@ -246,7 +246,10 @@ def tally_nutrients(food_summary_table, food_nutrition_table):
     food_nutrition_table = pd.read_csv(food_nutrition_table)
 
     # get water amount first
-    water_amount = food_summary.loc[food_summary["food"] == "Water", "amount_in_ml_or_g"].values[0]
+    try:
+        water_amount = food_summary.loc[food_summary["food"] == "Water", "amount_in_ml_or_g"].values[0]
+    except:
+        water_amount = 0
 
     # Drop the 'Unnamed: 0' column from food_summary
     food_summary = food_summary.drop(columns=["Unnamed: 0"])

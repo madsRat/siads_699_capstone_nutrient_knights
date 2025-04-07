@@ -71,7 +71,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def load_pdf_file(self):
         print('Loading pdf file.')
         # clear previous filepath
-        self.ui.file_path_selected_pdf.setText('file path')
+        self.ui.file_path_selected_pdf.setText('')
 
         #load file dialog
         file_dialog = QFileDialog()
@@ -85,7 +85,26 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             # cover edge case so textbox is available if user changes mind about inputs
             self.ui.plainTextEdit_dietary_recall.setDisabled(False)
 
+    def show_popup(self, message):
+        msg = QMessageBox()
+        msg.setWindowTitle("Pop-up Message")
+        msg.setText(message)
+        msg.setIcon(QMessageBox.Information)  # Optional: Set icon
+        msg.setStandardButtons(QMessageBox.Ok)  # Optional: Set buttons
+
+        ret = msg.exec_()
+
+        if ret == QMessageBox.Ok:
+            print("OK clicked")
+        elif ret == QMessageBox.Cancel:
+            print("Cancel clicked")
+
     def calculate(self):
+
+        # check if user put in inputs.
+        if self.ui.plainTextEdit_dietary_recall.toPlainText() == "" and self.ui.file_path_selected_pdf.toPlainText() == "":
+            self.show_popup("Please input Patient's 24 hr Diet Recall.")
+            return None
 
         # change color of button to indicate work in progress
         self.ui.pushButton_calculate.setEnabled(False)  # prevent user from double clicking
