@@ -68,6 +68,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.pushButton_calculate.clicked.connect(self.calculate)
         self.ui.browse_pdf_file.clicked.connect(self.load_pdf_file)
 
+        # set chatbot port
+        self.streamlit_port= 8515
+
     def load_pdf_file(self):
         print('Loading pdf file.')
         # clear previous filepath
@@ -128,10 +131,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             os.remove(file_path)
             print(f"File {file_path} deleted successfully.")
 
-        # # Step 1: Intialize RD Chatbot.
-        # self.start_rd_chatbot_thread()
-
-        # Step 2: Extract data from RD Inputs AND Run Nutrition Calculators
+        # Step 1: Extract data from RD Inputs AND Run Nutrition Calculators
         self.start_DRI_calculator_thread()
 
     @timeit
@@ -253,17 +253,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # connect finished singal to outside function
         worker.signals.finished.connect(self.update_result_summary_page)
 
-    # def load_chatbot(self, result):
-    #
-    #     # import time
-    #     # time.sleep(1)
-    #     #
-    #     # print('Loading chatbot into gui.')
-    #     # from PyQt5.QtCore import QUrl
-    #     # self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8515"))
-    #     # self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
-    #     # print('loaded chatbot successfully into gui.')
-
     def start_rd_chatbot_thread(self):
         worker = self.Worker_rd_chatbot(self)
         self.threadpool.start(worker)
@@ -274,7 +263,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         print('Loading chatbot into gui.')
         from PyQt5.QtCore import QUrl
-        self.ui.webEngineView_rd_chatbot.load(QUrl("http://localhost:8515"))
+
+        streamlit_url = "http://localhost:" + str(self.streamlit_port)
+        self.ui.webEngineView_rd_chatbot.load(QUrl(streamlit_url))
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
 
@@ -303,12 +294,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             print('STARTED: Robo_dietitian')
 
             user_input = self.main.summary_string
-            print('USER INPUT:', user_input)
+            print('USER INPUT 1:', user_input)
+
+            self.main.streamlit_port = self.main.streamlit_port + 1
+            print('STREAMLIT PORT 1:', self.main.streamlit_port)
+
+            server_input = "--server.port=" + str(self.main.streamlit_port)
 
             import subprocess
             process = subprocess.run(
                 ["python", "-m", "streamlit", "run", "robo_dietician.py", user_input, "--theme.base=dark", "--server.headless=true",
-                 "--server.port=8515"],)
+                 server_input],)
             print('COMPLETED: Robo_dietitian')
 
     # def closeEvent(self):
