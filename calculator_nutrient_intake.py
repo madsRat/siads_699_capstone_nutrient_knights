@@ -162,7 +162,8 @@ def extract_intake_amounts():
         "oz": (29.57, "ml"),  # ml
         "ml": (1, "ml"),  # ml
         "g": (1, "g"),  # g
-        "medium": (150, "g")  # g
+        "medium": (150, "g"),  # g
+        "IU": (0.3, 'mcg')
     }
 
     # Fractions to float
@@ -309,7 +310,7 @@ def create_mapped_nutrient_table():
         "Linoleic Acid": "*Not directly available*",
         "Dietary Cholesterol": "Cholesterol",
         "Total Water": "Water",
-        "Vitamin A": "Vitamin A",
+        "Vitamin A": "Vitamin A, IU",
         "Vitamin C": "Vitamin C, total ascorbic acid",
         "Vitamin D": "Vitamin D (D2 + D3)",
         "Vitamin B6": "Vitamin B-6",
