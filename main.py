@@ -70,6 +70,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # set chatbot port
         self.streamlit_port= 8515
+        self.summary_string = ''
 
     def load_pdf_file(self):
         print('Loading pdf file.')
@@ -135,15 +136,21 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.start_DRI_calculator_thread()
 
     @timeit
-    def DRI_calculator(self):
+    def DRI_calculator(self, signals_error):
 
-        # run calculator based on input data (option 1 or option 2)
-        if self.ui.file_path_selected_pdf.toPlainText() == '':
-            # user chooses option 1. to input freetext data
-            get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText()) # returns json file in results directory
-        else:
-            # user chooses option 2. to input pdf file
-            get_json(self.ui.file_path_selected_pdf.toPlainText())
+        try:
+            # run calculator based on input data (option 1 or option 2)
+            if self.ui.file_path_selected_pdf.toPlainText() == '':
+                # user chooses option 1. to input freetext data
+                get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText()) # returns json file in results directory
+            else:
+                # user chooses option 2. to input pdf file
+                get_json(self.ui.file_path_selected_pdf.toPlainText())
+        except Exception as e:
+            error_str = 'No internet connection found: Please ensure you have internet connection for API calls.'
+            print(error_str)
+            signals_error.finished.emit(error_str)
+            return None
 
         # compute DRI, patient nutrition needs
         patient_anthropometrics = preprocess_anthropometrics()
@@ -246,17 +253,24 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self.start_rd_chatbot_thread()
 
+    def show_internet_connection_error(self, error):
+        self.show_popup(error)
+
+        # Enable results tab
+        self.ui.tabWidget.setTabEnabled(1, False)
+        self.ui.pushButton_calculate.setEnabled(True) # re enable calculate push button
+
     def start_DRI_calculator_thread(self):
         worker = self.Worker_DRI_calculator(self, self.ui)
         self.threadpool.start(worker)
 
         # connect finished singal to outside function
         worker.signals.finished.connect(self.update_result_summary_page)
+        worker.signals_error.finished.connect(self.show_internet_connection_error)
 
     def start_rd_chatbot_thread(self):
         worker = self.Worker_rd_chatbot(self)
         self.threadpool.start(worker)
-        # worker.signals.finished.connect(self.load_chatbot)
 
         import time
         time.sleep(1)
@@ -275,10 +289,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.main = main
             self.ui = ui
             self.signals = self.main.WorkerSignals()
+            self.signals_error = self.main.WorkerSignals()
         @pyqtSlot()
         def run(self):
 
-            self.main.DRI_calculator()
+            self.main.DRI_calculator(self.signals_error)
 
             # send signal to populate summary page
             self.signals.finished.emit(self.main.summary_string)
