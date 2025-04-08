@@ -176,7 +176,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         results_df['need'] = results_df.apply(lambda row: f"{row['Need_Amount']} {row['Need_Unit']}", axis=1)
 
         df_macronutrients = results_df.iloc[0:10][['Nutrition', 'intake', 'need', 'Deviation']]
-        df_vitamins = results_df.iloc[11:24][['Nutrition', 'intake', 'need', 'Deviation']]
+        df_vitamins = results_df.iloc[10:24][['Nutrition', 'intake', 'need', 'Deviation']]
         df_essential_minerals = results_df.iloc[24:39][['Nutrition', 'intake', 'need', 'Deviation']]
         df_calories = results_df.iloc[39][['Nutrition', 'intake', 'need', 'Deviation']]
 
