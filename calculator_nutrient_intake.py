@@ -163,7 +163,7 @@ def extract_intake_amounts():
         "ml": (1, "ml"),  # ml
         "g": (1, "g"),  # g
         "medium": (150, "g"),  # g
-        "IU": (0.3, 'mcg')
+        # "IU": (0.3, 'mcg') # not the same conversions for Vitamin A, Vitamin B, Vitamin D, and Vitamin E
     }
 
     # Fractions to float
@@ -314,14 +314,14 @@ def create_mapped_nutrient_table():
         "Vitamin C": "Vitamin C, total ascorbic acid",
         "Vitamin D": "Vitamin D (D2 + D3)",
         "Vitamin B6": "Vitamin B-6",
-        "Vitamin E": "*Not available*",
-        "Vitamin K": "*Not available*",
+        "Vitamin E": "Vitamin E (alpha-tocopherol)",
+        "Vitamin K": "Vitamin K (phylloquinone)",
         "Thiamin": "Thiamin",
         "Vitamin B12": "Vitamin B-12",
         "Riboflavin": "Riboflavin",
         "Folate": "Folate, total",
         "Niacin": "Niacin",
-        "Choline": "*Not available*",
+        "Choline": "Choline, total",
         "Pantothenic Acid": "*Not available*",
         "Biotin": "*Not available*",
         "Carotenoids": "*Not available*",
@@ -388,10 +388,8 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
 
 @timeit
 def calculate_nutrient_intake(self):
+
     # chain all functions above and create nutrient intake table
-
-    # TODO feed results into chatbot
-
     create_nutrient_table(self)
     separate_units_from_table("results/nutrition_table.csv")
     extract_intake_amounts()
@@ -405,4 +403,3 @@ def compare_nutrient_intake_and_needs(patient_nutrient_needs):
     # prepare final table
     create_mapped_nutrient_table()
     create_intake_vs_needs_table("results/nutrition_total_intake.csv", patient_nutrient_needs, "results/Ordered_Mapped_Nutrients.csv")
-
