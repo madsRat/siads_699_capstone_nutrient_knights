@@ -4,8 +4,6 @@ from code_profiler import timeit
 
 @timeit
 def get_json_plaintext(plaintxt):
-    import os
-    from langchain import hub
     from langchain_openai import ChatOpenAI
     import os
 
@@ -250,12 +248,10 @@ def get_json(pdf_file_path):
     """
     model="gpt-4o-mini"
     result = get_llm_response(pdf_file_path, model, system_prompt).content
-
     json_txt = extract_json(result) # content_string
 
     import json
     python_dict = json.loads(json_txt)
-
     with open('results/llm_output_data.json', 'w') as outfile:
         json.dump(python_dict, outfile, indent=4)
         print('JSON FILE EXPORTED')
@@ -269,11 +265,7 @@ def get_food_json(pdf_file_path):
     result = get_llm_response(pdf_file_path, model, system_prompt)
     content = str(result)
     content_string = content.replace("\\n", "\n").replace("\\'", "'").replace("\\\"", "\"")
-
     json = extract_json(content_string)
-
-
-
     return json
 
 @timeit
@@ -285,6 +277,7 @@ def get_llm_response(pdf_file_path, model, system_prompt):
     from langchain_core.vectorstores import InMemoryVectorStore
     from langchain import hub
     from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import JsonOutputParser
     
     loader = PyPDFLoader(pdf_file_path)
     docs = loader.load()
@@ -302,10 +295,11 @@ def get_llm_response(pdf_file_path, model, system_prompt):
     vector_store.add_documents(documents=all_splits)
     
     prompt = hub.pull("rlm/rag-prompt", api_key=os.environ.get("OPENAI_API_KEY"))
+    parser = JsonOutputParser()
     system_prompt = system_prompt
     retrieved_docs = vector_store.similarity_search(system_prompt)
     docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
-    prompt = prompt.invoke({"context": docs_content, "question": system_prompt})
+    prompt = prompt.invoke({"context": docs_content, "question": system_prompt, "format_instructions": parser.get_format_instructions()})
 
     # initialize the llm
     llm = ChatOpenAI(model=model, temperature=0)
@@ -315,7 +309,6 @@ def get_llm_response(pdf_file_path, model, system_prompt):
 @timeit
 def extract_json(text):
     import re
-    
     match = re.search(r'```json\n({.*?})\n```', text, re.DOTALL)
     if match:
         return match.group(1)
