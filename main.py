@@ -33,34 +33,36 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         print(f'Running with max {self.max_threads} threads.')
 
         # set default inputs for testing code
-        plain_text = """
-        Name: Jane Doe 
-        Date: 3/9/2025
-        Telephone: 214.920.9999
-        Physician: Sarah Connor
-        Physician phone: 888.777.6666
-        Height: 69 inches
-        Weight: 150 lbs
-        DOB: 09/09/1979
-        Age: 46 years
-        Sex: Female
-        Activity Level: Active
-        
-        24-hr Diet Recall
-        Time	Place	Amount	Food Description	Notes
-        8 am	Kitchen	¾ cup	Raisin Bran
-                ½ cup	Apple juice
-                1 medium	Fresh peach
-        12 pm	Dining table	½ cup	Ground beef
-                1 cup	Mushroom stew
-                ½ cup	Rice
-                ¼ cup	Green beans
-                8 oz	Water
-        4 pm	Kitchen	½ cup	Pretzels
-                1 oz	Chocolate
-        7 pm	Dining table	1 cup	Spaghetti
-                ½ cup	Ground beef
-                8 oz	Water"""
+
+        plain_text = ""
+        # plain_text = """
+        # Name: Jane Doe
+        # Date: 3/9/2025
+        # Telephone: 214.920.9999
+        # Physician: Sarah Connor
+        # Physician phone: 888.777.6666
+        # Height: 69 inches
+        # Weight: 150 lbs
+        # DOB: 09/09/1979
+        # Age: 46 years
+        # Sex: Female
+        # Activity Level: Active
+        #
+        # 24-hr Diet Recall
+        # Time	Place	Amount	Food Description	Notes
+        # 8 am	Kitchen	¾ cup	Raisin Bran
+        #         ½ cup	Apple juice
+        #         1 medium	Fresh peach
+        # 12 pm	Dining table	½ cup	Ground beef
+        #         1 cup	Mushroom stew
+        #         ½ cup	Rice
+        #         ¼ cup	Green beans
+        #         8 oz	Water
+        # 4 pm	Kitchen	½ cup	Pretzels
+        #         1 oz	Chocolate
+        # 7 pm	Dining table	1 cup	Spaghetti
+        #         ½ cup	Ground beef
+        #         8 oz	Water"""
         self.ui.plainTextEdit_dietary_recall.setPlainText(plain_text)
         self.output_json_str = None # LLM output from user input
 
@@ -71,6 +73,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # set chatbot port
         self.streamlit_port= 8515
         self.summary_string = ''
+        self.streamlit_worker = None
 
     def load_pdf_file(self):
         print('Loading pdf file.')
@@ -131,6 +134,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         if os.path.exists(file_path):
             os.remove(file_path)
             print(f"File {file_path} deleted successfully.")
+
+        if self.streamlit_worker != None:
+            print('attempting to kill any existing streamlit process')
+            self.streamlit_worker.stop()
 
         # Step 1: Extract data from RD Inputs AND Run Nutrition Calculators
         self.start_DRI_calculator_thread()
@@ -269,8 +276,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         worker.signals_error.finished.connect(self.show_internet_connection_error)
 
     def start_rd_chatbot_thread(self):
-        worker = self.Worker_rd_chatbot(self)
-        self.threadpool.start(worker)
+        self.streamlit_worker = self.Worker_rd_chatbot(self)
+        self.threadpool.start(self.streamlit_worker)
 
         import time
         time.sleep(1)
@@ -279,6 +286,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         from PyQt5.QtCore import QUrl
 
         streamlit_url = "http://localhost:" + str(self.streamlit_port)
+        print('GUI USING PORT:', streamlit_url)
         self.ui.webEngineView_rd_chatbot.load(QUrl(streamlit_url))
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
         print('loaded chatbot successfully into gui.')
@@ -303,6 +311,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             super().__init__()
             self.main = main
             self.signals = self.main.WorkerSignals()
+            self.process = None
+            self._is_interrupted = False
         @pyqtSlot()
         def run(self):
             # run streamlit RD chatbot
@@ -311,21 +321,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             user_input = self.main.summary_string
             print('USER INPUT 1:', user_input)
 
-            self.main.streamlit_port = self.main.streamlit_port + 1
             print('STREAMLIT PORT 1:', self.main.streamlit_port)
 
             server_input = "--server.port=" + str(self.main.streamlit_port)
 
-            import subprocess
-            process = subprocess.run(
-                ["python", "-m", "streamlit", "run", "robo_dietician.py", user_input, "--theme.base=dark", "--server.headless=true",
-                 server_input],)
+            try:
+                import subprocess # subprocess.run
+                self.process = subprocess.Popen(["python", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true", server_input, "--" , user_input])
+            except Exception as e:
+                print("Error running subprocesses", e)
+
             print('COMPLETED: Robo_dietitian')
 
-    # def closeEvent(self):
-    #     print('Closing Robo_dietitian')
-    #     self.threadpool.terminate()
-    #     print('Closed Robo_dietitian')
+        def stop(self):
+            self._is_interrupted = True
+            if self.process != None:
+                self.process.terminate()
+                print('FORCEFULLY TERMINATED SUBPROCESS.')
+
+    def closeEvent(self, event):
+        print('Closing Robo_dietitian')
+        if self.streamlit_worker != None:
+            print('attempting to kill any existing streamlit process')
+            self.streamlit_worker.stop()
+        print('Closed Robo_dietitian')
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
