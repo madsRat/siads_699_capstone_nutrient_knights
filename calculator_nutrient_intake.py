@@ -26,39 +26,63 @@ def create_nutrient_table(self):
         for food in meal["items"]:
             food_items.append(food['food_description'])
 
-    # find nutrition fact for each food, but exclude water
-    # Dictionary to collect nutrient data
-    nutrient_data = {}
+    # try different search method, "Foundation" provide best nutrition details, 'Survey (FNDDS)', 'SR Legacy'
+    payloads = [{"requireAllWords": True, "dataType": ["Foundation"]},  # excatly match
+                {"requireAllWords": False, "dataType": ["Foundation"]},  # try no excatly match
+                {"requireAllWords": True, "dataType": ["SR Legacy"]},  # check other type
+                {"requireAllWords": True, "dataType": ["Survey (FNDDS)"]},  # check other type
+                {"requireAllWords": True, "dataType": ["Branded"]},  # try "Branded"
+                {"requireAllWords": False, "dataType": ["Branded"]},
+                # last chance to try "Branded" without requireAllWords
+                ]
 
     # API setup
     API_KEY = "A2cUE0WUknfVIuJGdkebUCcKjddw1RD0bpAny1SC"
     search_url = "https://api.nal.usda.gov/fdc/v1/foods/search"
     headers = {"Content-Type": "application/json"}
 
+    # compare how similar of two strings:
+    # similarity_score("apple", "Apples") => 0.91;  similarity_score("single malt", "malt") => 0.53
+    import difflib
+
+    def similarity_score(string1, string2):
+        similarity = difflib.SequenceMatcher(None, string1.lower(), string2.lower()).ratio()
+        return round(similarity, 2)
+
+    # find nutrition fact for each food, but exclude water
+    # Dictionary to collect nutrient data
+    nutrient_data = {}
+
     # Iterate over food items
     for food in food_items:
         if food.lower() == 'water':
             continue
 
-        payload = {
-            "query": food,
-            "requireAllWords": True,
-        }
+        # payload = {
+        #     "query": food,
+        #     "requireAllWords": True,
+        # }
 
         # extract_nutrition(search_url, API_KEY, headers, payload, food)
-        worker = Worker_extract_nutrition(search_url, API_KEY, headers, payload, food)
+        worker = Worker_extract_nutrition(search_url, API_KEY, headers, payloads, food)
         self.threadpool_extract_nutrients.start(worker)
 
     self.threadpool_extract_nutrients.waitForDone()
 
     # Create DataFrame
     df = pd.DataFrame(nutrient_data).T
+
+    # check if a query has no result, we need create zero column for it to avoid errors afterwords
+    missed_food = list(set(food_items) - set(df.columns) - set({'Water'}))
+    if missed_food:
+        print("missed those foods: ", missed_food)
+        df[missed_food] = 0
+
     df.index.name = "Nutrition"
 
     # export table to results directory
     filepath = Path(r"results/nutrition_table.csv")
     df.to_csv(filepath)
-
     return None
 
 class Worker_extract_nutrition(QRunnable):
@@ -78,30 +102,49 @@ def extract_nutrition(search_url, API_KEY, headers, payload, food):
     global nutrient_data
 
     try:
-        response = requests.post(f"{search_url}?api_key={API_KEY}", json=payload, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        foods = data.get("foods", [])
-        if not foods:
-            return None
+        print("\n ====== query: ", query, "=========")
+        similarity = 0.0
+        for payload in payloads:
+            # food = []
+            if similarity > 0.49:
+                break
+            payload['query'] = query
+            response = requests.post(f"{search_url}?api_key={API_KEY}", json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            foods = data.get("foods", [])
+            # print(foods)
+            if len(foods) != 0:
+                loops1 = 0
+                for food in foods:
 
-        first_fdc_id = foods[0]["fdcId"]
-        detail_url = f"https://api.nal.usda.gov/fdc/v1/food/{first_fdc_id}?api_key={API_KEY}"
-        response = requests.get(detail_url)
-        response.raise_for_status()
+                    first_word = food['description'].split(',')[0].lower()
+                    similarity = similarity_score(query, first_word)
+                    if similarity > 0.49 or loops1 > 4:
+                        print("query: ", query, "||food ID: ", food['fdcId'], "||similarity: ", similarity,
+                              "||data type: ", food['dataType'], "||food: ", food['description'])
 
-        food_data = response.json()
-        food_name = food_data.get("description", food)
+                        # print(food["foodNutrients"])
+                        # get nutrition data
+                        for nutrient in food["foodNutrients"]:
+                            # name = nutrient["nutrient"]["nam]
+                            name = nutrient["nutrientName"]
+                            amount = nutrient["value"]
+                            unit = nutrient["unitName"].lower()
+                            label = f"{amount} {unit}" if amount is not None else "N/A"
 
-        for nutrient in food_data.get("foodNutrients", []):
-            name = nutrient["nutrient"]["name"]
-            amount = nutrient.get("amount")
-            unit = nutrient["nutrient"]["unitName"]
-            label = f"{amount} {unit}" if amount is not None else "N/A"
+                            if name not in nutrient_data:
+                                nutrient_data[name] = {}
+                            # nutrient_data[name][food] = label
+                            nutrient_data[name][query] = label
 
-            if name not in nutrient_data:
-                nutrient_data[name] = {}
-            nutrient_data[name][food] = label
+                        break
+                    else:
+                        print("xxx no good match(", similarity, ") ", query, ":", food['description'])
+                        loops1 += 1
+                        print("loops: ", loops1)
+            else:
+                print("----- No found by", payload)
 
     except Exception as e:
         print(f"Error processing {food}: {e}")
@@ -114,40 +157,51 @@ def separate_units_from_table(nutrition_table):
     import re
 
     # Load the CSV file
-    df = pd.read_csv(nutrition_table, index_col=0)
+    df = pd.read_csv(nutrition_table)
 
-    # Select the first food column to extract units from
-    first_food_col = df.columns[0]
-
-    # Initialize UNIT column
-    unit_column = []
-
-    # Process each row to extract unit and strip it from all columns
-    for index, row in df.iterrows():
-        first_val = row[first_food_col]
-        if pd.isna(first_val) or not isinstance(first_val, str):
-            unit_column.append(None)
-            continue
-
-        # Extract numeric value and unit using regex
-        match = re.match(r"([-+]?\d*\.\d+|\d+)\s*(\D+)", first_val.strip())
+    # Function to extract numeric value and unit
+    def extract_value_and_unit(cell):
+        if pd.isna(cell):
+            return pd.NA, pd.NA
+        match = re.match(r"([\d\.]+)\s*(\w+)", str(cell))
         if match:
-            unit = match.group(2).strip()
-        else:
-            unit = None
-        unit_column.append(unit)
+            return float(match.group(1)), match.group(2).lower()
+        return pd.NA, pd.NA
 
-    # Add the UNIT column
-    df["UNIT"] = unit_column
+    values_df = df.copy()
+    units_df = pd.DataFrame(index=df.index, columns=df.columns)
 
-    # Remove units and convert to numeric values
-    for col in df.columns[:-1]:  # Skip the UNIT column
-        df[col] = df[col].astype(str).str.extract(r"([-+]?\d*\.\d+|\d+)")[0]
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+    for col in df.columns[1:]:
+        extracted = df[col].apply(extract_value_and_unit)
+        values_df[col] = extracted.apply(lambda x: x[0])
+        units_df[col] = extracted.apply(lambda x: x[1])
 
-    # export table to results directory
-    filepath = Path(r"results/food_nutrition_table.csv")
-    df.to_csv(filepath)
+    # Define conversion factors
+    kj_to_kcal = 0.239005736
+    iu_to_ug = 0.6  # 1 IU = 0.6 mcg of beta-carotene (from food)
+
+    # Force convert "kj" to "kcal" and "iu" to "ug" regardless of other units
+    for col in df.columns[1:]:
+        for i in values_df.index:
+            unit = units_df.at[i, col]
+            value = values_df.at[i, col]
+            if pd.notna(unit) and pd.notna(value):
+                if unit == "kj":
+                    values_df.at[i, col] = value * kj_to_kcal
+                    units_df.at[i, col] = "kcal"
+                elif unit == "iu":
+                    values_df.at[i, col] = value * iu_to_ug
+                    units_df.at[i, col] = "ug"
+
+    # Determine the unit for each row
+    unit_column = []
+    for i in units_df.index:
+        row_units = units_df.iloc[i, 1:].dropna().unique()
+        unit_column.append(row_units[0] if len(row_units) == 1 else pd.NA)
+
+    # Append Unit column to final DataFrame
+    values_df["UNIT"] = unit_column
+    values_df.to_csv("food_nutrition_table.csv")
 
 @timeit
 def extract_intake_amounts():
@@ -158,12 +212,45 @@ def extract_intake_amounts():
 
     # Conversion factors to grams or milliliters (approximate values)
     CONVERSIONS = {
-        "cup": (240, "ml"),  # ml
-        "oz": (29.57, "ml"),  # ml
-        "ml": (1, "ml"),  # ml
-        "g": (1, "g"),  # g
-        "medium": (150, "g"),  # g
-        # "IU": (0.3, 'mcg') # not the same conversions for Vitamin A, Vitamin B, Vitamin D, and Vitamin E
+        # Volume-based
+        "cup": (240, "ml"),
+        "oz": (29.57, "ml"),
+        "ml": (1, "ml"),
+        "tsp": (5, "ml"),
+        "tbsp": (15, "ml"),
+
+        # Weight-based
+        "g": (1, "g"),
+        "kg": (1000, "g"),
+        "mg": (0.001, "g"),
+        "lb": (453.6, "g"),
+        # "oz (weight)": (28.35, "g"),
+
+        # Approximate weights for subjective portion sizes
+        "medium": (150, "g"),
+        "small": (100, "g"),
+        "large": (200, "g"),
+
+        # Units often used for pre-packaged or common snack items
+        "bar": (40, "g"),
+        "can": (355, "ml"),
+        "bag": (50, "g"),
+        "bottle": (500, "ml"),
+        "pouch": (100, "g"),
+        "slice": (100, "g"),  # assume most of case we use "slice" for cake or pizza
+
+        # "slice (bread)": (30, "g"),         # 1 slice of sandwich bread
+        # "slice (cheese)": (20, "g"),        # 1 slice of processed cheese
+        # "slice (ham)": (25, "g"),           # 1 slice of deli ham
+        # "slice (turkey)": (25, "g"),        # 1 slice of deli turkey
+        # "slice (tomato)": (20, "g"),        # 1 medium-thick tomato slice
+        # "slice (apple)": (15, "g"),         # 1 apple slice
+        # "slice (cake)": (80, "g"),          # 1 standard slice of cake
+        # "slice (pizza)": (125, "g")         # 1 average slice of pizza
+
+        # Liquid alcohol serving estimate
+        "glass": (150, "ml"),
+        "ml": (1, "ml"),
     }
 
     # Fractions to float
@@ -276,115 +363,80 @@ def tally_nutrients(food_summary_table, food_nutrition_table):
     unit_column = food_nutrition_table.set_index("Nutrition")["UNIT"]
     # Join the unit column with df_nutrition_summary
     df_nutrition_summary = df_nutrition_summary.join(unit_column)
-    # add water back to nutrition list
-    df_nutrition_summary.loc["Water"] = [water_amount / 1000, "liters"]
+    # add water back to nutrition list, water_amount is g, covert to liter
+    df_nutrition_summary.loc['Water', 'Amount'] = (df_nutrition_summary.loc['Water', 'Amount'] + water_amount) / 1000
+    df_nutrition_summary.loc["Water", 'UNIT'] = ["liters"]
 
     # export table to results directory
     filepath = Path(r"results/nutrition_total_intake.csv")
     df_nutrition_summary.to_csv(filepath)
 
 @timeit
-def create_mapped_nutrient_table():
-    # Define the ordered Need_Nutrition list
-    ordered_need_nutrition = [
-        "Calories", "Carbohydrate", "Total Fiber", "Protein", "Fat",
-        "Saturated fatty acids", "Trans fatty acids", "Î±-Linolenic Acid", "Linoleic Acid",
-        "Dietary Cholesterol", "Total Water", "Vitamin A", "Vitamin C", "Vitamin D",
-        "Vitamin B6", "Vitamin E", "Vitamin K", "Thiamin", "Vitamin B12", "Riboflavin",
-        "Folate", "Niacin", "Choline", "Pantothenic Acid", "Biotin", "Carotenoids",
-        "Calcium", "Chloride", "Chromium", "Copper", "Fluoride", "Iodine", "Iron",
-        "Magnesium", "Manganese", "Molybdenum", "Phosphorus", "Potassium", "Selenium",
-        "Sodium", "Zinc"
-    ]
-
-    # Define the combined mapping as a dictionary
-    mapping_dict = {
-        "Calories": "Energy",
-        "Carbohydrate": "Carbohydrate, by difference",
-        "Total Fiber": "Fiber, total dietary",
-        "Protein": "Protein",
-        "Fat": "Total lipid (fat)",
-        "Saturated fatty acids": "Fatty acids, total saturated",
-        "Trans fatty acids": "Fatty acids, total trans",
-        "Î±-Linolenic Acid": "*Not directly available*",
-        "Linoleic Acid": "*Not directly available*",
-        "Dietary Cholesterol": "Cholesterol",
-        "Total Water": "Water",
-        "Vitamin A": "Vitamin A, IU",
-        "Vitamin C": "Vitamin C, total ascorbic acid",
-        "Vitamin D": "Vitamin D (D2 + D3)",
-        "Vitamin B6": "Vitamin B-6",
-        "Vitamin E": "Vitamin E (alpha-tocopherol)",
-        "Vitamin K": "Vitamin K (phylloquinone)",
-        "Thiamin": "Thiamin",
-        "Vitamin B12": "Vitamin B-12",
-        "Riboflavin": "Riboflavin",
-        "Folate": "Folate, total",
-        "Niacin": "Niacin",
-        "Choline": "Choline, total",
-        "Pantothenic Acid": "*Not available*",
-        "Biotin": "*Not available*",
-        "Carotenoids": "*Not available*",
-        "Calcium": "Calcium, Ca",
-        "Chloride": "*Not available*",
-        "Chromium": "*Not available*",
-        "Copper": "Copper, Cu",
-        "Fluoride": "*Not available*",
-        "Iodine": "*Not available*",
-        "Iron": "Iron, Fe",
-        "Magnesium": "Magnesium, Mg",
-        "Manganese": "*Not available*",
-        "Molybdenum": "*Not available*",
-        "Phosphorus": "Phosphorus, P",
-        "Potassium": "Potassium, K",
-        "Selenium": "*Not available*",
-        "Sodium": "Sodium, Na",
-        "Zinc": "Zinc, Zn"
-    }
-
-    # Create ordered DataFrame
-    ordered_df = pd.DataFrame([
-        (nutrient, mapping_dict.get(nutrient, "*Not available*"))
-        for nutrient in ordered_need_nutrition
-    ], columns=["Need_Nutrition", "Intake_Nutrition"])
-
-    # export table to results directory
-    filepath = Path(r"results/Ordered_Mapped_Nutrients.csv")
-    ordered_df.to_csv(filepath, index=False)
-
-@timeit
 def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, ordered_mapped_nutrients):
     # Load the uploaded CSV files
     intake_df = pd.read_csv(nutrition_total_intake)
     needs_df = nutrition_total_needs # input is dataframe from DRI calculator
-    mapping_df = pd.read_csv(ordered_mapped_nutrients)
 
-    # Create mapping dictionary
-    name_mapping = dict(zip(mapping_df["Intake_Nutrition"], mapping_df["Need_Nutrition"]))
+    # Define mapping from intake_nutrition to need_nutrition
+    intake_to_need_mapping = {
+        'Iron, Fe': 'Iron', 'Magnesium, Mg': 'Magnesium', 'Phosphorus, P': 'Phosphorus',
+        'Potassium, K': 'Potassium', 'Sodium, Na': 'Sodium', 'Zinc, Zn': 'Zinc',
+        'Nitrogen': None, 'Copper, Cu': 'Copper', 'Total lipid (fat)': 'Fat',
+        'Thiamin': 'Thiamin', 'Manganese, Mn': 'Manganese', 'Niacin': 'Niacin',
+        'Ash': None, 'Starch': None, 'Vitamin B-6': 'Vitamin B6', 'Fiber, total dietary': 'Total Fiber',
+        'Biotin': 'Biotin', 'Water': 'Total Water', 'Calcium, Ca': 'Calcium',
+        'Protein': 'Protein', 'Carbohydrate, by difference': 'Carbohydrate',
+        'Energy (Atwater General Factors)': 'Calories', 'Energy (Atwater Specific Factors)': None,
+        'Citric acid': None, 'Vitamin C, total ascorbic acid': 'Vitamin C',
+        'Malic acid': None, 'Oxalic acid': None, 'Quinic acid': None, 'Folate, total': 'Folate',
+        'Sucrose': None, 'Galactose': None, 'Glucose': None, 'Fructose': None,
+        'Lactose': None, 'Maltose': None, 'Sugars, Total': None, 'Energy': 'Calories',
+        'Cryptoxanthin, beta': None, 'Lycopene': None, 'Riboflavin': 'Riboflavin',
+        'Vitamin K (Dihydrophylloquinone)': 'Vitamin K', 'Vitamin K (phylloquinone)': 'Vitamin K',
+        'Vitamin A, RAE': 'Vitamin A', 'Carotene, beta': 'Carotenoids',
+        'Carotene, alpha': None, 'Tryptophan': None, 'Threonine': None, 'Methionine': None,
+        'Phenylalanine': None, 'Tyrosine': None, 'Alanine': None, 'Glutamic acid': None,
+        'Glycine': None, 'Proline': None, 'Lutein + zeaxanthin': None,
+        'Pantothenic acid': 'Pantothenic Acid', 'Selenium, Se': 'Selenium',
+        'Isoleucine': None, 'Leucine': None, 'Lysine': None, 'Cystine': None,
+        'Valine': None, 'Arginine': None, 'Histidine': None, 'Aspartic acid': None,
+        'Serine': None, 'Fiber, insoluble': None, 'Fiber, soluble': None,
+        'Carbohydrate, by summation': None, 'Cholesterol': 'Dietary Cholesterol',
+        'Fatty acids, total polyunsaturated': None, 'Fatty acids, total monounsaturated': None,
+        'Fatty acids, total trans': 'Trans fatty acids', 'Fatty acids, total saturated': 'Saturated fatty acids',
+        'Ergothioneine': None, 'Vitamin D4': 'Vitamin D', 'Vitamin D2 (ergocalciferol)': 'Vitamin D',
+        'Vitamin D (D2 + D3)': 'Vitamin D', 'Vitamin D (D2 + D3), International Units': None,
+        'Delta-5-avenasterol': None, 'Ergosterol': None, 'Delta-7-Stigmastenol': None,
+        'Stigmasterol': None, 'Campesterol': None, 'Beta-sitosterol': None, 'Beta-glucan': None,
+        'Ergosta-7-enol': None, 'Ergosta-7,22-dienol': None, 'Ergosta-5,7-dienol': None,
+        'Beta-sitostanol': None, 'Glutathione': None, 'Molybdenum, Mo': 'Molybdenum',
+        'Vitamin K (Menaquinone-4)': 'Vitamin K', 'Total Sugars': None,
+        'Vitamin A, IU': 'Vitamin A', 'Vitamin B-12': 'Vitamin B12'
+    }
 
-    # Map and prepare intake data
-    intake_df["Nutrition"] = intake_df["Nutrition"].map(name_mapping)
-    intake_df = intake_df.dropna(subset=["Nutrition"])  # Drop unmapped rows
-    intake_df = intake_df.rename(columns={"UNIT": "Intake_Unit"})
+    # Map intake nutrients to need equivalents
+    intake_df["Mapped_Nutrition"] = intake_df["Nutrition"].map(intake_to_need_mapping)
 
-    # Merge with needs data
-    # merged_df = pd.merge(needs_df, intake_df, on="Nutrition", how="left")
-    merged_df = pd.merge(needs_df, intake_df, on="Nutrition", how="left").drop(columns=["Unnamed: 0"], errors="ignore")
+    # Aggregate total intake and select first unit per Mapped_Nutrition
+    aggregated_intake_with_unit = (
+        intake_df.dropna(subset=["Mapped_Nutrition"])
+        .groupby("Mapped_Nutrition")
+        .agg({"Amount": "sum", "UNIT": "first"})
+        .reset_index()
+        .rename(columns={"Mapped_Nutrition": "Nutrition", "Amount": "Total Intake", "UNIT": "Intake_Unit"})
+    )
 
-    # data cleaning
-    merged_df['Amount'] = merged_df['Amount'].fillna(0) # replace nan with 0 intake
-    # replace missing intake units with needs units.
-    merged_df['Intake_Unit'] = np.where(merged_df['Intake_Unit'].isnull(), merged_df['Need_Unit'], merged_df['Intake_Unit'])
+    # Merge aggregated data into needs dataframe
+    final_needs_df = pd.merge(needs_df, aggregated_intake_with_unit, how="left", on="Nutrition")
+    final_needs_df['Need_Amount'] = final_needs_df['Need_Amount'].fillna(0)
+    final_needs_df["Deviation"] = final_needs_df["Need_Amount"] - final_needs_df["Total Intake"]
+    final_needs_df.rename(columns={"Total Intake": "Intake_Amount"}, inplace=True)
+    final_needs_df['Intake_Amount'] = final_needs_df['Intake_Amount'].round(2)
+    final_needs_df['Deviation'] = final_needs_df['Deviation'].round(2)
 
-    merged_df["Deviation"] = merged_df["Amount"] - merged_df["Need_Amount"]
-    # Round all numeric columns to 1 decimal point
-    numeric_cols = merged_df.select_dtypes(include=["float64", "int64"]).columns
-    merged_df[numeric_cols] = merged_df[numeric_cols].round(1)
-    merged_df = merged_df.rename(columns={"Amount": "Intake_Amount"})
-
-    # export table to results directory
-    filepath = Path(r"results/Nutrition_Intake_vs_Needs.csv")
-    merged_df.to_csv(filepath, index=False)
+    # Save the final merged file
+    final_output_path = "Nutrition_Intake_vs_Needs.csv"
+    final_needs_df.to_csv(final_output_path, index=False)
 
 @timeit
 def calculate_nutrient_intake(self):
@@ -394,12 +446,10 @@ def calculate_nutrient_intake(self):
     separate_units_from_table("results/nutrition_table.csv")
     extract_intake_amounts()
     tally_nutrients("results/food_summary.csv", "results/food_nutrition_table.csv")
-
     return None
 
 @timeit
 def compare_nutrient_intake_and_needs(patient_nutrient_needs):
     # get_patient_nutrient_needs(patient_nutrient_needs)
     # prepare final table
-    create_mapped_nutrient_table()
     create_intake_vs_needs_table("results/nutrition_total_intake.csv", patient_nutrient_needs, "results/Ordered_Mapped_Nutrients.csv")
