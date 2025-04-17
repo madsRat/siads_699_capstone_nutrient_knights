@@ -1,5 +1,4 @@
 import os
-
 from code_profiler import timeit
 
 @timeit
@@ -127,9 +126,12 @@ def get_json_plaintext(plaintxt):
     import json
     python_dict = json.loads(json_txt)
 
-    with open('results/llm_output_data.json', 'w') as outfile:
-        json.dump(python_dict, outfile, indent=4)
-        print('JSON FILE EXPORTED')
+    if python_dict['patient']['name'] == "May Day":
+        print('Not a valid diet recall. Please try again.')
+    else:
+        with open('results/llm_output_data.json', 'w') as outfile:
+            json.dump(python_dict, outfile, indent=4)
+            print('JSON FILE EXPORTED')
     return None
 
 @timeit
@@ -252,9 +254,13 @@ def get_json(pdf_file_path):
 
     import json
     python_dict = json.loads(json_txt)
-    with open('results/llm_output_data.json', 'w') as outfile:
-        json.dump(python_dict, outfile, indent=4)
-        print('JSON FILE EXPORTED')
+
+    if python_dict['patient']['name'] == "May Day":
+        print('Not a valid diet recall. Please try again.')
+    else:
+        with open('results/llm_output_data.json', 'w') as outfile:
+            json.dump(python_dict, outfile, indent=4)
+            print('JSON FILE EXPORTED')
     return None
 
 @timeit

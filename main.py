@@ -167,8 +167,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             signals_error.finished.emit(error_str)
             return None
 
-        # compute DRI, patient nutrition needs
-        patient_anthropometrics = preprocess_anthropometrics()
+        try:
+            # compute DRI, patient nutrition needs
+            patient_anthropometrics = preprocess_anthropometrics()
+        except Exception as e:
+            error_msg = 'Error: Invalid 24-hour diet recall. Please retry.'
+            signals_error.finished.emit(error_msg)
+            print(error_msg)
+            return None
 
         print('STARTED: DRI calculator')
         result_dri_df = calculate_patient_needs(patient_anthropometrics)
