@@ -34,35 +34,35 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # set default inputs for testing code
 
-        plain_text = ""
-        # plain_text = """
-        # Name: Jane Doe
-        # Date: 3/9/2025
-        # Telephone: 214.920.9999
-        # Physician: Sarah Connor
-        # Physician phone: 888.777.6666
-        # Height: 69 inches
-        # Weight: 150 lbs
-        # DOB: 09/09/1979
-        # Age: 46 years
-        # Sex: Female
-        # Activity Level: Active
-        #
-        # 24-hr Diet Recall
-        # Time	Place	Amount	Food Description	Notes
-        # 8 am	Kitchen	¾ cup	Raisin Bran
-        #         ½ cup	Apple juice
-        #         1 medium	Fresh peach
-        # 12 pm	Dining table	½ cup	Ground beef
-        #         1 cup	Mushroom stew
-        #         ½ cup	Rice
-        #         ¼ cup	Green beans
-        #         8 oz	Water
-        # 4 pm	Kitchen	½ cup	Pretzels
-        #         1 oz	Chocolate
-        # 7 pm	Dining table	1 cup	Spaghetti
-        #         ½ cup	Ground beef
-        #         8 oz	Water"""
+        # plain_text = ""
+        plain_text = """
+        Name: Jane Doe
+        Date: 3/9/2025
+        Telephone: 214.920.9999
+        Physician: Sarah Connor
+        Physician phone: 888.777.6666
+        Height: 69 inches
+        Weight: 150 lbs
+        DOB: 09/09/1979
+        Age: 46 years
+        Sex: Female
+        Activity Level: Active
+
+        24-hr Diet Recall
+        Time	Place	Amount	Food Description	Notes
+        8 am	Kitchen	¾ cup	Raisin Bran
+                ½ cup	Apple juice
+                1 medium	Fresh peach
+        12 pm	Dining table	½ cup	Ground beef
+                1 cup	Mushroom stew
+                ½ cup	Rice
+                ¼ cup	Green beans
+                8 oz	Water
+        4 pm	Kitchen	½ cup	Pretzels
+                1 oz	Chocolate
+        7 pm	Dining table	1 cup	Spaghetti
+                ½ cup	Ground beef
+                8 oz	Water"""
         self.ui.plainTextEdit_dietary_recall.setPlainText(plain_text)
         self.output_json_str = None # LLM output from user input
 
@@ -74,6 +74,128 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.streamlit_port= 8515
         self.summary_string = ''
         self.streamlit_worker = None
+
+        # ask users to present API keys
+        self.openAI_key = ''
+        self.fda_key = ''
+
+        # Make sure API keys are valid before proceeding to the program.
+        while (self.openAI_key=='' or self.fda_key==''):
+            self.load_API_keys_popup()
+            self.check_API_keys()
+            print('check api key loop')
+
+    def check_API_keys(self):
+
+        def is_api_key_valid(api_key):
+            # check OpenAI API key
+            from openai import OpenAI
+            from openai import AuthenticationError, OpenAIError
+
+            client = OpenAI(api_key=api_key)
+            try:
+                client.models.list()  # Uses new SDK method
+                return True
+            except AuthenticationError:
+                return False
+            except OpenAIError as e:
+                print("Other OpenAI error:", str(e))
+                return False
+
+        # check FDA API key
+        def is_fdc_api_key_valid(api_key):
+            import requests
+            url = "https://api.nal.usda.gov/fdc/v1/foods/search"
+            params = {
+                "query": "apple",
+                "api_key": api_key
+            }
+
+            try:
+                response = requests.get(url, params=params)
+                if response.status_code == 200:
+                    return True
+                elif response.status_code == 401:
+                    print("❌ Unauthorized: Invalid API key.")
+                    return False
+                else:
+                    print(f"⚠️ Unexpected status code: {response.status_code}")
+                    return False
+            except requests.exceptions.RequestException as e:
+                print(f"Error during request: {e}")
+                return False
+
+        if is_api_key_valid(self.openAI_key):
+            print("✅ OpenAI API key is valid!")
+            os.environ["OPENAI_API_KEY"] = self.openAI_key
+        else:
+            error_msg = "❌ Invalid OpenAI API key. Please try again."
+            print(error_msg)
+            self.openAI_key = ''
+            self.show_popup(error_msg)
+
+        if is_fdc_api_key_valid(self.fda_key):
+            print("✅ FDA FoodData Central API key is valid!")
+            # self.fda_key already referenced in calculator_nutrient_table.py
+        else:
+            error_msg = "❌ Invalid FDA FoodData Central API key. Please try again."
+            print(error_msg)
+            self.fda_key = ''
+            self.show_popup(error_msg)
+
+        # if (is_api_key_valid(self.openAI_key)==False or is_fdc_api_key_valid(self.fda_key)==False):
+        #     print('API key is invalid! Please re-enter')
+        #     self.load_API_keys_popup()
+
+    def load_API_keys_popup(self, ):
+
+        part_1 = "Welcome! Please enter your API keys below to use RoboDietitian: \n\n"
+        part_2 = "Don't have API Keys? No problem, you can create them here: \n\n"
+        part_3 = "https://openai.com/api/\n"
+        part_4 = "https://fdc.nal.usda.gov/api-guide\n"
+        message = part_1 + part_2 + part_3 + part_4
+
+        dialog = QDialog()
+        dialog.setWindowTitle("RoboDietitian")
+
+        layout = QVBoxLayout()
+
+        # Message Header
+        message_label = QLabel(message)
+        layout.addWidget(message_label)
+
+        # First input with header
+        label1 = QLabel("OpenAI")
+        self.openAI_API_key = QLineEdit()
+        self.openAI_API_key.setText(self.openAI_key)
+        self.openAI_API_key.setEchoMode(QLineEdit.Password)
+        layout.addWidget(label1)
+        layout.addWidget(self.openAI_API_key)
+
+        # Second input with header
+        label2 = QLabel("FDA FoodData Central")
+        self.fda_API_key = QLineEdit()
+        self.fda_API_key.setText(self.fda_key)
+        self.fda_API_key.setEchoMode(QLineEdit.Password)
+        layout.addWidget(label2)
+        layout.addWidget(self.fda_API_key)
+
+        # OK Button
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(dialog.accept)
+        layout.addWidget(ok_button)
+
+        dialog.setLayout(layout)
+
+        if dialog.exec_() == QDialog.Accepted:
+            print("OK clicked")
+            print("First input:", self.openAI_API_key.text())
+            print("Second input:", self.fda_API_key.text())
+
+            self.openAI_key = self.openAI_API_key.text()
+            self.fda_key = self.fda_API_key.text()
+
+
 
     def load_pdf_file(self):
         print('Loading pdf file.')

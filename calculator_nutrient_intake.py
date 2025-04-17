@@ -37,7 +37,7 @@ def create_nutrient_table(self):
                 ]
 
     # API setup
-    API_KEY = "A2cUE0WUknfVIuJGdkebUCcKjddw1RD0bpAny1SC"
+    API_KEY = self.fda_key
     search_url = "https://api.nal.usda.gov/fdc/v1/foods/search"
     headers = {"Content-Type": "application/json"}
 
