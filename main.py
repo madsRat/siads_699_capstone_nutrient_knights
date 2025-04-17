@@ -130,10 +130,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.tableWidget_essential_minerals.clearContents()
 
         # remove existing json ouput file if already exists
-        file_path = 'results/llm_output_data.json'
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            print(f"File {file_path} deleted successfully.")
+        remove_files = ['results/llm_output_data.json',
+                     'results/food_nutrition_table.csv',
+                     'results/food_summary.csv',
+                     'results/nutrition_table.csv',
+                    'results/nutrition_total_intake.csv',
+                    'results/Nutrition_Intake_vs_Needs.csv'
+                     ]
+
+        for file in remove_files:
+            if os.path.exists(file):
+                os.remove(file)
+                print(f"File {file} deleted successfully.")
 
         if self.streamlit_worker != None:
             print('attempting to kill any existing streamlit process')
@@ -175,6 +183,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # read results table from 'Nutrition_Intake_vs_Needs.csv'
         results_df = pd.read_csv(r'results/Nutrition_Intake_vs_Needs.csv')
+        results_df = results_df.fillna(0)
 
         results_df['Deviation'] = results_df['Deviation'].astype(float) # needed for identifying deficiencies and tagging
 
@@ -194,7 +203,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             for col in range(df_macronutrients.shape[1]-1): # minus -1 to ignore deviation col, but use to color row
                 item = QTableWidgetItem(str(df_macronutrients.iloc[row, col]))
                 self.ui.tableWidget_macronutrients.setItem(row, col, item)
-                if df_macronutrients['Deviation'].iloc[row] < 0:# change color to red if nutrient deficient
+                if df_macronutrients['Deviation'].iloc[row] > 0:# change color to red if nutrient deficient
                     item.setBackground(QColor(139, 0, 0))
 
         self.ui.tableWidget_macronutrients.update()
@@ -204,7 +213,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             for col in range(df_vitamins.shape[1]-1):# minus -1 to ignore deviation col, but use to color row
                 item = QTableWidgetItem(str(df_vitamins.iloc[row, col]))
                 self.ui.tableWidget_micronutrients.setItem(row, col, item)
-                if df_vitamins['Deviation'].iloc[row] < 0:# change color to red if nutrient deficient
+                if df_vitamins['Deviation'].iloc[row] > 0:# change color to red if nutrient deficient
                     item.setBackground(QColor(139, 0, 0))
         self.ui.tableWidget_micronutrients.update()
 
@@ -213,7 +222,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             for col in range(df_essential_minerals.shape[1]-1):# minus -1 to ignore deviation col, but use to color row
                 item = QTableWidgetItem(str(df_essential_minerals.iloc[row, col]))
                 self.ui.tableWidget_essential_minerals.setItem(row, col, item)
-                if df_essential_minerals['Deviation'].iloc[row] < 0: # change color to red if nutrient deficient
+                if df_essential_minerals['Deviation'].iloc[row] > 0: # change color to red if nutrient deficient
                     item.setBackground(QColor(139, 0, 0))
         self.ui.tableWidget_essential_minerals.update()
 
@@ -228,7 +237,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         patient_caloric_intake = str(df_calories['intake'])
         patient_caloric_need = str(df_calories['need'])
 
-        deficient_bool_mask = results_df['Deviation'] < 0
+        deficient_bool_mask = results_df['Deviation'] > 0
         deficient_rows = results_df[deficient_bool_mask]
         deficient_nutrients = deficient_rows['Nutrition'].tolist()
 

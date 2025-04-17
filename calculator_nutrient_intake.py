@@ -41,14 +41,6 @@ def create_nutrient_table(self):
     search_url = "https://api.nal.usda.gov/fdc/v1/foods/search"
     headers = {"Content-Type": "application/json"}
 
-    # compare how similar of two strings:
-    # similarity_score("apple", "Apples") => 0.91;  similarity_score("single malt", "malt") => 0.53
-    import difflib
-
-    def similarity_score(string1, string2):
-        similarity = difflib.SequenceMatcher(None, string1.lower(), string2.lower()).ratio()
-        return round(similarity, 2)
-
     # find nutrition fact for each food, but exclude water
     # Dictionary to collect nutrient data
     nutrient_data = {}
@@ -86,20 +78,27 @@ def create_nutrient_table(self):
     return None
 
 class Worker_extract_nutrition(QRunnable):
-    def __init__(self, search_url, API_KEY, headers, payload, food):
+    def __init__(self, search_url, API_KEY, headers, payloads, query):
         super().__init__()
         self.search_url = search_url
         self.API_KEY = API_KEY
         self.headers = headers
-        self.payload = payload
-        self.food = food
+        self.payloads = payloads
+        self.food = query
     @pyqtSlot()
     def run(self):
-        extract_nutrition(self.search_url, self.API_KEY, self.headers, self.payload, self.food)
+        extract_nutrition(self.search_url, self.API_KEY, self.headers, self.payloads, self.food)
 
 
-def extract_nutrition(search_url, API_KEY, headers, payload, food):
+def extract_nutrition(search_url, API_KEY, headers, payloads, query):
     global nutrient_data
+
+    def similarity_score(string1, string2):
+        # compare how similar of two strings:
+        # similarity_score("apple", "Apples") => 0.91;  similarity_score("single malt", "malt") => 0.53
+        import difflib
+        similarity = difflib.SequenceMatcher(None, string1.lower(), string2.lower()).ratio()
+        return round(similarity, 2)
 
     try:
         print("\n ====== query: ", query, "=========")
@@ -147,7 +146,7 @@ def extract_nutrition(search_url, API_KEY, headers, payload, food):
                 print("----- No found by", payload)
 
     except Exception as e:
-        print(f"Error processing {food}: {e}")
+        print(f"Error processing {query}: {e}")
 
 @timeit
 def separate_units_from_table(nutrition_table):
@@ -201,7 +200,7 @@ def separate_units_from_table(nutrition_table):
 
     # Append Unit column to final DataFrame
     values_df["UNIT"] = unit_column
-    values_df.to_csv("food_nutrition_table.csv")
+    values_df.to_csv("results/food_nutrition_table.csv")
 
 @timeit
 def extract_intake_amounts():
@@ -324,14 +323,15 @@ def extract_intake_amounts():
     df_food_summary.to_csv(filepath)
 
 @timeit
-def tally_nutrients(food_summary_table, food_nutrition_table):
+def tally_nutrients(food_summary_table, food_nutrition):
     # Sum nutrition
 
     import pandas as pd
 
     # Load the data
     food_summary = pd.read_csv(food_summary_table)
-    food_nutrition_table = pd.read_csv(food_nutrition_table)
+    food_nutrition_table = pd.read_csv(food_nutrition)
+    food_nutrition_table = food_nutrition_table.fillna(0)
 
     # get water amount first
     try:
@@ -361,11 +361,12 @@ def tally_nutrients(food_summary_table, food_nutrition_table):
     df_nutrition_summary = adjusted_nutrition.sum(axis=1).to_frame(name="Amount")
     # Extract the UNIT column from the original food_nutrition_table
     unit_column = food_nutrition_table.set_index("Nutrition")["UNIT"]
+
     # Join the unit column with df_nutrition_summary
     df_nutrition_summary = df_nutrition_summary.join(unit_column)
     # add water back to nutrition list, water_amount is g, covert to liter
     df_nutrition_summary.loc['Water', 'Amount'] = (df_nutrition_summary.loc['Water', 'Amount'] + water_amount) / 1000
-    df_nutrition_summary.loc["Water", 'UNIT'] = ["liters"]
+    df_nutrition_summary.loc["Water", 'UNIT'] = "liters"
 
     # export table to results directory
     filepath = Path(r"results/nutrition_total_intake.csv")
@@ -393,7 +394,7 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
         'Lactose': None, 'Maltose': None, 'Sugars, Total': None, 'Energy': 'Calories',
         'Cryptoxanthin, beta': None, 'Lycopene': None, 'Riboflavin': 'Riboflavin',
         'Vitamin K (Dihydrophylloquinone)': 'Vitamin K', 'Vitamin K (phylloquinone)': 'Vitamin K',
-        'Vitamin A, RAE': 'Vitamin A', 'Carotene, beta': 'Carotenoids',
+        'Vitamin A, RAE': 'Vitamin A',
         'Carotene, alpha': None, 'Tryptophan': None, 'Threonine': None, 'Methionine': None,
         'Phenylalanine': None, 'Tyrosine': None, 'Alanine': None, 'Glutamic acid': None,
         'Glycine': None, 'Proline': None, 'Lutein + zeaxanthin': None,
@@ -428,14 +429,19 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
 
     # Merge aggregated data into needs dataframe
     final_needs_df = pd.merge(needs_df, aggregated_intake_with_unit, how="left", on="Nutrition")
+
+    final_needs_df['Intake_Unit'] = np.where(final_needs_df['Intake_Unit'].isnull(), final_needs_df['Need_Unit'],
+                                        final_needs_df['Intake_Unit'])
+
     final_needs_df['Need_Amount'] = final_needs_df['Need_Amount'].fillna(0)
     final_needs_df["Deviation"] = final_needs_df["Need_Amount"] - final_needs_df["Total Intake"]
     final_needs_df.rename(columns={"Total Intake": "Intake_Amount"}, inplace=True)
     final_needs_df['Intake_Amount'] = final_needs_df['Intake_Amount'].round(2)
     final_needs_df['Deviation'] = final_needs_df['Deviation'].round(2)
+    final_needs_df['Need_Amount'] = final_needs_df['Need_Amount'].round(2)
 
     # Save the final merged file
-    final_output_path = "Nutrition_Intake_vs_Needs.csv"
+    final_output_path = "results/Nutrition_Intake_vs_Needs.csv"
     final_needs_df.to_csv(final_output_path, index=False)
 
 @timeit
