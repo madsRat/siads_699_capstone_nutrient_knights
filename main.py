@@ -32,7 +32,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         print(f'Running with max {self.max_threads} threads.')
 
-        # set default inputs for testing code
+        # provide example for user
 
         # plain_text = ""
         plain_text = """
@@ -298,9 +298,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             print(error_msg)
             return None
 
-        print('STARTED: DRI calculator')
-        result_dri_df = calculate_patient_needs(patient_anthropometrics)
-        print('COMPLETED: DRI calculator')
+
+        try:
+            print('STARTED: DRI calculator')
+            result_dri_df = calculate_patient_needs(patient_anthropometrics)
+            print('COMPLETED: DRI calculator')
+        except Exception as e:
+            print(e)
+            return None
 
         # compute nutrition intake
         # AND create nutrition tables in results directory
@@ -438,7 +443,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         @pyqtSlot()
         def run(self):
 
-            self.main.DRI_calculator(self.signals_error)
+            try:
+                self.main.DRI_calculator(self.signals_error)
+            except Exception as e:
+                print(e)
 
             # send signal to populate summary page
             self.signals.finished.emit(self.main.summary_string)
@@ -464,7 +472,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
             try:
                 import subprocess # subprocess.run
-                self.process = subprocess.Popen(["python", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true", server_input, "--" , user_input])
+                self.process = subprocess.Popen(["python3", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true", server_input, "--" , user_input])
             except Exception as e:
                 print("Error running subprocesses", e)
 

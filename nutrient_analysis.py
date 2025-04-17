@@ -340,7 +340,7 @@ class Ui_main_window(object):
 
     def retranslateUi(self, main_window):
         _translate = QtCore.QCoreApplication.translate
-        main_window.setWindowTitle(_translate("main_window", "Nutrient Analysis of 24-hr Diet Recall"))
+        main_window.setWindowTitle(_translate("main_window", "RoboDietitian"))
         self.label_enter_free_text.setText(_translate("main_window", "a. Enter free text:"))
         self.label_select_pdf_file_2.setText(_translate("main_window", "c. Select PDF for OCR:"))
         self.browse_pdf_file.setText(_translate("main_window", "Browse"))
