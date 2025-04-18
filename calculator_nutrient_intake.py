@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 import numpy as np
 import requests
@@ -11,12 +12,17 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-@timeit
 def create_nutrient_table(self):
-    global nutrient_data
-    # find food list from intake json file
 
-    import json
+    """
+    Creates the nutrient table
+    :param self:
+    :creats results/nutrition_table.csv
+    """
+
+    global nutrient_data # required to store data with multi-threaded query to FDA food database.
+
+    # find food list from intake json file
     with open('results/llm_output_data.json', 'r') as file:
         data = json.load(file)
 
@@ -49,11 +55,6 @@ def create_nutrient_table(self):
     for food in food_items:
         if food.lower() == 'water':
             continue
-
-        # payload = {
-        #     "query": food,
-        #     "requireAllWords": True,
-        # }
 
         # extract_nutrition(search_url, API_KEY, headers, payload, food)
         worker = Worker_extract_nutrition(search_url, API_KEY, headers, payloads, food)
@@ -89,7 +90,6 @@ class Worker_extract_nutrition(QRunnable):
     def run(self):
         extract_nutrition(self.search_url, self.API_KEY, self.headers, self.payloads, self.food)
 
-
 def extract_nutrition(search_url, API_KEY, headers, payloads, query):
     global nutrient_data
 
@@ -123,7 +123,6 @@ def extract_nutrition(search_url, API_KEY, headers, payloads, query):
                         print("query: ", query, "||food ID: ", food['fdcId'], "||similarity: ", similarity,
                               "||data type: ", food['dataType'], "||food: ", food['description'])
 
-                        # print(food["foodNutrients"])
                         # get nutrition data
                         for nutrient in food["foodNutrients"]:
                             # name = nutrient["nutrient"]["nam]
@@ -148,12 +147,13 @@ def extract_nutrition(search_url, API_KEY, headers, payloads, query):
     except Exception as e:
         print(f"Error processing {query}: {e}")
 
-@timeit
 def separate_units_from_table(nutrition_table):
-    # seperate unit and amount for nutrition_table
 
-    import pandas as pd
-    import re
+    """
+    seperate unit and amount for nutrition_table
+    :param nutrition_table:
+    :creates: results/food_nutrition_table.csv
+    """
 
     # Load the CSV file
     df = pd.read_csv(nutrition_table)
@@ -202,12 +202,13 @@ def separate_units_from_table(nutrition_table):
     values_df["UNIT"] = unit_column
     values_df.to_csv("results/food_nutrition_table.csv")
 
-@timeit
 def extract_intake_amounts():
-    # load food intake json file again to get food intake, convert unit to ml or g
 
-    import json
-    import pandas as pd
+    """
+    Load food intake json file again to get food intake, convert unit to ml or g
+    Extract intake amounts
+    :creates: food_summary.csv
+    """
 
     # Conversion factors to grams or milliliters (approximate values)
     CONVERSIONS = {
@@ -284,7 +285,6 @@ def extract_intake_amounts():
             return factor, target_unit, 1
         return None, None, None
 
-    import json
     with open('results/llm_output_data.json', 'r') as file:
         data = json.load(file)
 
@@ -322,11 +322,14 @@ def extract_intake_amounts():
     filepath = Path(r"results/food_summary.csv")
     df_food_summary.to_csv(filepath)
 
-@timeit
 def tally_nutrients(food_summary_table, food_nutrition):
-    # Sum nutrition
 
-    import pandas as pd
+    """
+    Sum nutrition and put into single table
+    :param food_summary_table:
+    :param food_nutrition:
+    :creates: results/nutrition_total_intake.csv
+    """
 
     # Load the data
     food_summary = pd.read_csv(food_summary_table)
@@ -372,8 +375,15 @@ def tally_nutrients(food_summary_table, food_nutrition):
     filepath = Path(r"results/nutrition_total_intake.csv")
     df_nutrition_summary.to_csv(filepath)
 
-@timeit
 def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, ordered_mapped_nutrients):
+
+    """
+    :param nutrition_total_intake:
+    :param nutrition_total_needs:
+    :param ordered_mapped_nutrients:
+    :creates: results/Nutrition_Intake_vs_Needs.csv
+    """
+
     # Load the uploaded CSV files
     intake_df = pd.read_csv(nutrition_total_intake)
     needs_df = nutrition_total_needs # input is dataframe from DRI calculator
@@ -444,18 +454,25 @@ def create_intake_vs_needs_table(nutrition_total_intake, nutrition_total_needs, 
     final_output_path = "results/Nutrition_Intake_vs_Needs.csv"
     final_needs_df.to_csv(final_output_path, index=False)
 
-@timeit
 def calculate_nutrient_intake(self):
 
-    # chain all functions above and create nutrient intake table
+    """
+    chain all functions above and create nutrient intake table
+    :param self:
+    :creates: results/nutrition_total_intake.csv
+    """
+
     create_nutrient_table(self)
     separate_units_from_table("results/nutrition_table.csv")
     extract_intake_amounts()
     tally_nutrients("results/food_summary.csv", "results/food_nutrition_table.csv")
-    return None
 
-@timeit
 def compare_nutrient_intake_and_needs(patient_nutrient_needs):
-    # get_patient_nutrient_needs(patient_nutrient_needs)
+
+    """
+    Compare nutrient intake and needs table
+    :param patient_nutrient_needs:
+    :creates: results/Nutrition_Intake_vs_Needs.csv
+    """
     # prepare final table
     create_intake_vs_needs_table("results/nutrition_total_intake.csv", patient_nutrient_needs, "results/Ordered_Mapped_Nutrients.csv")
