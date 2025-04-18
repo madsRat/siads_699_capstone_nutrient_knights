@@ -1,9 +1,16 @@
 import sys
 import os
+import json
+import time
+import subprocess
+import requests
 import pandas as pd
 
+from openai import OpenAI
+from openai import AuthenticationError, OpenAIError
+
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThreadPool, QThread, QRunnable
+from PyQt5.QtCore import QThreadPool, QThread, QRunnable, QUrl
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -12,7 +19,7 @@ from nutrient_analysis import Ui_main_window
 from GetJsonFromLlm import get_json_plaintext, get_json
 from calculator_nutrient_intake import calculate_nutrient_intake, compare_nutrient_intake_and_needs, extract_nutrition
 from calculator_nutrient_needs import preprocess_anthropometrics, calculate_patient_needs
-from code_profiler import timeit
+# from code_profiler import timeit
 
 class ApplicationWindow(QtWidgets.QMainWindow):
 
@@ -91,6 +98,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # Make sure API keys are valid before proceeding to the program.
         while (self.openAI_key=='' or self.fda_key==''):
+
             self.load_API_keys_popup()
             self.check_API_keys()
 
@@ -102,10 +110,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         """
 
         def is_api_key_valid(api_key):
-            # check OpenAI API key
-            from openai import OpenAI
-            from openai import AuthenticationError, OpenAIError
 
+            # check OpenAI API key
             client = OpenAI(api_key=api_key)
             try:
                 client.models.list()  # Uses new SDK method
@@ -118,7 +124,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # check FDA API key
         def is_fdc_api_key_valid(api_key):
-            import requests
+
             url = "https://api.nal.usda.gov/fdc/v1/foods/search"
             params = {
                 "query": "apple",
@@ -264,7 +270,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         """
 
         # check if user put in inputs.
-        if self.ui.plainTextEdit_dietary_recall.toPlainText() == "" and self.ui.file_path_selected_pdf.toPlainText() == "":
+        if (self.ui.plainTextEdit_dietary_recall.toPlainText() == "" and
+                self.ui.file_path_selected_pdf.toPlainText() == ""):
             self.show_popup("Please input Patient's 24 hr Diet Recall.")
             return None
 
@@ -318,7 +325,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             # run calculator based on input data (option 1 or option 2)
             if self.ui.file_path_selected_pdf.toPlainText() == '':
                 # user chooses option 1. to input freetext data
-                get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText()) # returns json file in results directory
+                get_json_plaintext(self.ui.plainTextEdit_dietary_recall.toPlainText()) # returns json in results dir
             else:
                 # user chooses option 2. to input pdf file
                 get_json(self.ui.file_path_selected_pdf.toPlainText())
@@ -397,7 +404,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.tableWidget_essential_minerals.update()
 
         # populate Summary of Results section
-        import json
         with open('results/llm_output_data.json', 'r') as file:
             patient_dict = json.load(file)
 
@@ -412,7 +418,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         deficient_rows = results_df[deficient_bool_mask]
         deficient_nutrients = deficient_rows['Nutrition'].tolist()
 
-        summary_of_results_str = (f"Based on the 24 hr dietary recall, {patient_name} consumed {patient_caloric_intake} "
+        summary_of_results_str = (f"Based on the 24 hr dietary recall, {patient_name} consumed {patient_caloric_intake}"
                                   f"of the recommended {patient_caloric_need}. {patient_name} is deficient in "
                                   f"{deficient_nutrients}.")
 
@@ -467,10 +473,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.streamlit_worker = self.Worker_rd_chatbot(self)
         self.threadpool.start(self.streamlit_worker)
 
-        import time
         time.sleep(1) # provide time for gui to start up. will not start correctly without this.
-
-        from PyQt5.QtCore import QUrl
 
         # connect GUI to RD Chatbot instance (streamlit)
         streamlit_url = "http://localhost:" + str(self.streamlit_port)
@@ -510,8 +513,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             server_input = "--server.port=" + str(self.main.streamlit_port)
 
             try:
-                import subprocess # subprocess.run
-                self.process = subprocess.Popen(["python3", "-m", "streamlit", "run", "robo_dietician.py", "--theme.base=dark", "--server.headless=true", server_input, "--" , user_input])
+                self.process = subprocess.Popen(["python3", "-m", "streamlit", "run", "robo_dietician.py",
+                                                 "--theme.base=dark", "--server.headless=true", server_input, "--" ,
+                                                 user_input])
             except Exception as e:
                 print("Error running subprocesses", e)
 
