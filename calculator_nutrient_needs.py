@@ -1,8 +1,8 @@
-import pandas as pd
 import re
-from code_profiler import timeit
+import json
+import pandas as pd
+# from code_profiler import timeit
 
-@timeit
 def parse_amount_unit(value):
     splitted = value.split()
     if len(splitted) == 2:
@@ -17,10 +17,13 @@ def parse_amount_unit(value):
         print('parse_amount_unit: value is None.')
     return val, unit
 
-@timeit
 def preprocess_anthropometrics():
 
-    import json
+    """
+    Extracts anthropometrics data (i.e. age, weight, height, etc) from resultant json file from GetJsonFromLLM.py
+    :return: patient anthropometrics data
+    """
+
     with open('results/llm_output_data.json', 'r') as file:
         patient_dict = json.load(file)
 
@@ -130,6 +133,15 @@ def preprocess_anthropometrics():
     return patient_anthropometrics
 
 def basal_metabolic_rate(patient_anthropometrics, df):
+
+    """
+    :param patient_anthropometrics:
+    :param df:
+    :return: patient's needed calories (adjusted Basal Metabolic Rate)
+
+    Equations derived from: https://www.omnicalculator.com/health/bmr
+    """
+
     # Compute Basal Metabolic Rate (BMR)
     activity_levels = {
         'inactive': 1.4,
@@ -151,8 +163,14 @@ def basal_metabolic_rate(patient_anthropometrics, df):
 
     return round(bmr_adjusted, 2)
 
-@timeit
 def calculate_patient_needs(patient_anthropometrics):
+
+    """
+    :param patient_anthropometrics:
+    :return: result_dri_df (patient nutritional needs)
+
+    # Equations derived from: Dietary Reference Intakes: The Essential Guide to Nutrient Requirements (2006)
+    """
 
     # import DRI Tables
     if patient_anthropometrics['sex'] == 'male':
@@ -371,6 +389,6 @@ def calculate_patient_needs(patient_anthropometrics):
     }
 
     df_calories = pd.DataFrame(calories)
-
     result_dri_df = pd.concat([df_macronutrients, df_vitamins, df_essential_minerals, df_calories])
+
     return result_dri_df
