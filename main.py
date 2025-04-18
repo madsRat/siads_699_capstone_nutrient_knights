@@ -1,4 +1,5 @@
-from datetime import time
+import sys
+import os
 import pandas as pd
 
 from PyQt5 import QtWidgets
@@ -6,7 +7,6 @@ from PyQt5.QtCore import QThreadPool, QThread, QRunnable
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-# from aiohttp import worker
 
 from nutrient_analysis import Ui_main_window
 from GetJsonFromLlm import get_json_plaintext, get_json
@@ -14,28 +14,34 @@ from calculator_nutrient_intake import calculate_nutrient_intake, compare_nutrie
 from calculator_nutrient_needs import preprocess_anthropometrics, calculate_patient_needs
 from code_profiler import timeit
 
-import sys
-import os
-
 class ApplicationWindow(QtWidgets.QMainWindow):
+
+    """
+    Main application window for RoboDietitian.
+    RoboDietitian is an application that can calculate nutrient deficiencies for healthy individuals over the age of 1.
+    RoboDietitian is not intended for personal health or medical applications.
+    RoboDietitian should only be used in academic setting; Created for University of Michigan, SIADS 699 Capstone class.
+    Developed by Daniel Torrecampo, Ayan Banerjee, Richard Chaulker, and Wei Liu.
+    """
     def __init__(self):
         super(ApplicationWindow, self).__init__()
+
+        # import user interface class
         self.ui = Ui_main_window()
         self.ui.setupUi(self)
 
+        # enable multithreading to allow multiple process to occur at one time.
         self.threadpool = QThreadPool()
         self.max_threads = QThread.idealThreadCount()
         self.threadpool.setMaxThreadCount(self.max_threads)
 
+        # create a separate thread pool for querying FDA food database. Ensures threads are independent and safe.
         self.threadpool_extract_nutrients = QThreadPool()
         self.threadpool_extract_nutrients.setMaxThreadCount(self.max_threads)
 
-        print(f'Running with max {self.max_threads} threads.')
-
-        # provide example for user
-
-        # plain_text = ""
+        # provide example 24-hour diet recall for user
         plain_text = """
+        
         Name: Jane Doe
         Date: 3/9/2025
         Telephone: 214.920.9999
@@ -62,7 +68,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 1 oz	Chocolate
         7 pm	Dining table	1 cup	Spaghetti
                 ½ cup	Ground beef
-                8 oz	Water"""
+                8 oz	Water
+                
+                """
+
+        # pre-populate text input to provide user with an example 24-hr diet recall
         self.ui.plainTextEdit_dietary_recall.setPlainText(plain_text)
         self.output_json_str = None # LLM output from user input
 
@@ -83,9 +93,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         while (self.openAI_key=='' or self.fda_key==''):
             self.load_API_keys_popup()
             self.check_API_keys()
-            print('check api key loop')
 
     def check_API_keys(self):
+
+        """
+        Checks if API keys for OpenAI and FDA Food datasets are valid.
+        If keys are valid, then they are saved to the main gui.
+        """
 
         def is_api_key_valid(api_key):
             # check OpenAI API key
@@ -112,6 +126,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             }
 
             try:
+                # send quick query to see if api key is valid
                 response = requests.get(url, params=params)
                 if response.status_code == 200:
                     return True
@@ -125,6 +140,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 print(f"Error during request: {e}")
                 return False
 
+        # save OpenAI API key if valid
         if is_api_key_valid(self.openAI_key):
             print("✅ OpenAI API key is valid!")
             os.environ["OPENAI_API_KEY"] = self.openAI_key
@@ -134,6 +150,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.openAI_key = ''
             self.show_popup(error_msg)
 
+        # save FDA FoodData Central API key if valid
         if is_fdc_api_key_valid(self.fda_key):
             print("✅ FDA FoodData Central API key is valid!")
             # self.fda_key already referenced in calculator_nutrient_table.py
@@ -143,11 +160,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.fda_key = ''
             self.show_popup(error_msg)
 
-        # if (is_api_key_valid(self.openAI_key)==False or is_fdc_api_key_valid(self.fda_key)==False):
-        #     print('API key is invalid! Please re-enter')
-        #     self.load_API_keys_popup()
+    def load_API_keys_popup(self):
 
-    def load_API_keys_popup(self, ):
+        """
+        A Pop-up window upon program start that requires users to enter API keys.
+        :return: self.openAI_key, self.fda_key
+        """
 
         part_1 = "Welcome! Please enter your API keys below to use RoboDietitian: \n\n"
         part_2 = "Don't have API Keys? No problem, you can create them here: \n\n"
@@ -164,7 +182,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         message_label = QLabel(message)
         layout.addWidget(message_label)
 
-        # First input with header
+        # OpenAI header
         label1 = QLabel("OpenAI")
         self.openAI_API_key = QLineEdit()
         self.openAI_API_key.setText(self.openAI_key)
@@ -172,7 +190,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         layout.addWidget(label1)
         layout.addWidget(self.openAI_API_key)
 
-        # Second input with header
+        # FDA Food Dataset header
         label2 = QLabel("FDA FoodData Central")
         self.fda_API_key = QLineEdit()
         self.fda_API_key.setText(self.fda_key)
@@ -188,23 +206,24 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         dialog.setLayout(layout)
 
         if dialog.exec_() == QDialog.Accepted:
-            print("OK clicked")
-            print("First input:", self.openAI_API_key.text())
-            print("Second input:", self.fda_API_key.text())
-
+            # save api keys to main gui
             self.openAI_key = self.openAI_API_key.text()
             self.fda_key = self.fda_API_key.text()
 
-
-
     def load_pdf_file(self):
-        print('Loading pdf file.')
+
+        """
+        loads 24-hour diet recall (pdf format)
+        :return: file path of pdf file
+        """
+
         # clear previous filepath
         self.ui.file_path_selected_pdf.setText('')
 
         #load file dialog
         file_dialog = QFileDialog()
         file_path, _ = file_dialog.getOpenFileName(self, "Select PDF file")
+
         if file_path != (None or ''):
             self.ui.file_path_selected_pdf.setText(file_path)
             # clear plain text input
@@ -215,6 +234,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.ui.plainTextEdit_dietary_recall.setDisabled(False)
 
     def show_popup(self, message):
+
+        """
+        Generic popup window to display error messages
+        :param message:
+        :return: popup window
+        """
+
         msg = QMessageBox()
         msg.setWindowTitle("Pop-up Message")
         msg.setText(message)
@@ -224,11 +250,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         ret = msg.exec_()
 
         if ret == QMessageBox.Ok:
-            print("OK clicked")
+            print("Acknowledged.")
         elif ret == QMessageBox.Cancel:
-            print("Cancel clicked")
+            print("Cancelled.")
 
     def calculate(self):
+
+        """
+        Starts chain of events prior to calculating nutrient intake and patient recommended intake.
+        1. modifies GUI interface
+        2. clears old data and threads
+        3. starts multi-threaded calculation.
+        """
 
         # check if user put in inputs.
         if self.ui.plainTextEdit_dietary_recall.toPlainText() == "" and self.ui.file_path_selected_pdf.toPlainText() == "":
@@ -240,7 +273,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.pushButton_calculate.setText('Calculating...')
         self.ui.pushButton_calculate.setStyleSheet("background-color: green;")
 
-
         # keep user in analysis tab so tables can populate correctly
         self.ui.tabWidget.setTabEnabled(1, False)
         self.ui.tabWidget.setCurrentIndex(0) # automatically show to analysis tab
@@ -251,7 +283,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.tableWidget_micronutrients.clearContents()
         self.ui.tableWidget_essential_minerals.clearContents()
 
-        # remove existing json ouput file if already exists
         remove_files = ['results/llm_output_data.json',
                      'results/food_nutrition_table.csv',
                      'results/food_summary.csv',
@@ -260,20 +291,28 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                     'results/Nutrition_Intake_vs_Needs.csv'
                      ]
 
+        # remove existing json ouput file if already exists
         for file in remove_files:
             if os.path.exists(file):
                 os.remove(file)
-                print(f"File {file} deleted successfully.")
 
+        # remove streamlit chatbot threads from previous runs
         if self.streamlit_worker != None:
-            print('attempting to kill any existing streamlit process')
             self.streamlit_worker.stop()
 
-        # Step 1: Extract data from RD Inputs AND Run Nutrition Calculators
+        # Extract data from RD Inputs AND Run Nutrition Calculators
         self.start_DRI_calculator_thread()
 
-    @timeit
+    # @timeit
     def DRI_calculator(self, signals_error):
+
+        """
+        1. Extracts patient data and diet recall from user input.
+        2. Calculates nutrient intake and patient recommended intake.
+        3. Modifies GUI interface to present data and results.
+        :param signals_error:
+        :return: excel files in results directory
+        """
 
         try:
             # run calculator based on input data (option 1 or option 2)
@@ -298,32 +337,28 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             print(error_msg)
             return None
 
-
         try:
-            print('STARTED: DRI calculator')
+            # calculate patient nutrient needs
             result_dri_df = calculate_patient_needs(patient_anthropometrics)
-            print('COMPLETED: DRI calculator')
         except Exception as e:
             print(e)
             return None
 
-        # compute nutrition intake
-        # AND create nutrition tables in results directory
-        print('STARTED: Intake calculator')
+        # compute nutrition intake and create nutrition tables in results directory
         calculate_nutrient_intake(self) # creates all necessary excel tables for below.
         compare_nutrient_intake_and_needs(result_dri_df) # produces 'Nutrition_Intake_vs_Needs.csv'
-        print('COMPLETED: Intake calculator')
 
         # read results table from 'Nutrition_Intake_vs_Needs.csv'
         results_df = pd.read_csv(r'results/Nutrition_Intake_vs_Needs.csv')
         results_df = results_df.fillna(0)
 
-        results_df['Deviation'] = results_df['Deviation'].astype(float) # needed for identifying deficiencies and tagging
+        results_df['Deviation'] = results_df['Deviation'].astype(float) # needed to identify deficiencies and tagging
 
         # add units to table
         results_df['intake'] = results_df.apply(lambda row: f"{row['Intake_Amount']} {row['Intake_Unit']}", axis=1)
         results_df['need'] = results_df.apply(lambda row: f"{row['Need_Amount']} {row['Need_Unit']}", axis=1)
 
+        # organize results to put into GUI tables
         df_macronutrients = results_df.iloc[0:10][['Nutrition', 'intake', 'need', 'Deviation']]
         df_vitamins = results_df.iloc[10:24][['Nutrition', 'intake', 'need', 'Deviation']]
         df_essential_minerals = results_df.iloc[24:39][['Nutrition', 'intake', 'need', 'Deviation']]
@@ -348,6 +383,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 self.ui.tableWidget_micronutrients.setItem(row, col, item)
                 if df_vitamins['Deviation'].iloc[row] > 0:# change color to red if nutrient deficient
                     item.setBackground(QColor(139, 0, 0))
+
         self.ui.tableWidget_micronutrients.update()
 
         # Set Table for Essential Minerals in GUI
@@ -357,6 +393,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 self.ui.tableWidget_essential_minerals.setItem(row, col, item)
                 if df_essential_minerals['Deviation'].iloc[row] > 0: # change color to red if nutrient deficient
                     item.setBackground(QColor(139, 0, 0))
+
         self.ui.tableWidget_essential_minerals.update()
 
         # populate Summary of Results section
@@ -370,6 +407,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         patient_caloric_intake = str(df_calories['intake'])
         patient_caloric_need = str(df_calories['need'])
 
+        # find deficient nutrients and feed into patient summary
         deficient_bool_mask = results_df['Deviation'] > 0
         deficient_rows = results_df[deficient_bool_mask]
         deficient_nutrients = deficient_rows['Nutrition'].tolist()
@@ -386,13 +424,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.tabWidget.setCurrentIndex(1) # automatically show to results tab
         self.ui.pushButton_calculate.setEnabled(True) # re enable calculate push button
 
-        print('COMPLETED: Analysis')
-
     class WorkerSignals(QObject):
+        """"
+        pyqt5 signal that allows GUI to communicate when task is completed.
+        """
         finished = pyqtSignal(str)
 
     def update_result_summary_page(self, result):
 
+        # update text box with results
         self.ui.textBrowser_is_patient_nutrient_deficient.setText(result)
         self.ui.textBrowser_is_patient_nutrient_deficient.update()
 
@@ -400,9 +440,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.pushButton_calculate.setText('Calculate')
         self.ui.pushButton_calculate.setStyleSheet("background-color: gray;")
 
+        # start RD chatbot after calculations are complete.
         self.start_rd_chatbot_thread()
 
     def show_internet_connection_error(self, error):
+        # show pop up in internet connection not present. internet required for FDA and OpenAI endpoints.
         self.show_popup(error)
 
         # Enable results tab
@@ -410,28 +452,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.pushButton_calculate.setEnabled(True) # re enable calculate push button
 
     def start_DRI_calculator_thread(self):
+
+        # create worker thread for DRI and intake calculators
         worker = self.Worker_DRI_calculator(self, self.ui)
         self.threadpool.start(worker)
 
-        # connect finished singal to outside function
+        # connect finished signal to outside function
         worker.signals.finished.connect(self.update_result_summary_page)
         worker.signals_error.finished.connect(self.show_internet_connection_error)
 
     def start_rd_chatbot_thread(self):
+
+        # create worker thread for RD chatbot
         self.streamlit_worker = self.Worker_rd_chatbot(self)
         self.threadpool.start(self.streamlit_worker)
 
         import time
-        time.sleep(1)
+        time.sleep(1) # provide time for gui to start up. will not start correctly without this.
 
-        print('Loading chatbot into gui.')
         from PyQt5.QtCore import QUrl
 
+        # connect GUI to RD Chatbot instance (streamlit)
         streamlit_url = "http://localhost:" + str(self.streamlit_port)
-        print('GUI USING PORT:', streamlit_url)
         self.ui.webEngineView_rd_chatbot.load(QUrl(streamlit_url))
         self.ui.webEngineView_rd_chatbot.setZoomFactor(0.75)
-        print('loaded chatbot successfully into gui.')
 
     class Worker_DRI_calculator(QRunnable):
         def __init__(self, main, ui):
@@ -460,14 +504,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self._is_interrupted = False
         @pyqtSlot()
         def run(self):
+
             # run streamlit RD chatbot
-            print('STARTED: Robo_dietitian')
-
             user_input = self.main.summary_string
-            print('USER INPUT 1:', user_input)
-
-            print('STREAMLIT PORT 1:', self.main.streamlit_port)
-
             server_input = "--server.port=" + str(self.main.streamlit_port)
 
             try:
@@ -476,20 +515,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             except Exception as e:
                 print("Error running subprocesses", e)
 
-            print('COMPLETED: Robo_dietitian')
-
         def stop(self):
+
+            # stop RD chatbot running in subprocess thread
             self._is_interrupted = True
             if self.process != None:
                 self.process.terminate()
-                print('FORCEFULLY TERMINATED SUBPROCESS.')
 
     def closeEvent(self, event):
-        print('Closing Robo_dietitian')
+
+        # close RD chatbot
         if self.streamlit_worker != None:
-            print('attempting to kill any existing streamlit process')
             self.streamlit_worker.stop()
-        print('Closed Robo_dietitian')
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
