@@ -1,10 +1,23 @@
 import os
-from code_profiler import timeit
+import re
+import json
 
-@timeit
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain import hub
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import JsonOutputParser
+
+# from code_profiler import timeit
+
 def get_json_plaintext(plaintxt):
-    from langchain_openai import ChatOpenAI
-    import os
+
+    """
+    :param plaintxt: 24-hour diet recall
+    :return: structured json file in results directory
+    """
 
     system_prompt = """Create a JSON for the information available in the below text. Include all information in the JSON.\n\n
     Adhere to the following JSON structure:
@@ -117,13 +130,13 @@ def get_json_plaintext(plaintxt):
   ]
 }
     """
+
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=os.environ.get("OPENAI_API_KEY"))
     prompt = system_prompt + plaintxt
     result = llm.invoke(prompt).content
 
     json_txt = extract_json(result) # content_string
 
-    import json
     python_dict = json.loads(json_txt)
 
     if python_dict['patient']['name'] == "May Day":
@@ -134,8 +147,13 @@ def get_json_plaintext(plaintxt):
             print('JSON FILE EXPORTED')
     return None
 
-@timeit
 def get_json(pdf_file_path):
+
+    """
+    :param pdf: 24-hour diet recall
+    :return: structured json file in results directory
+    """
+
     json = ''
     system_prompt = """Create a JSON for the information available in the document. Include all information in the JSON.
      Adhere to the following JSON structure:
@@ -252,7 +270,6 @@ def get_json(pdf_file_path):
     result = get_llm_response(pdf_file_path, model, system_prompt).content
     json_txt = extract_json(result) # content_string
 
-    import json
     python_dict = json.loads(json_txt)
 
     if python_dict['patient']['name'] == "May Day":
@@ -263,27 +280,31 @@ def get_json(pdf_file_path):
             print('JSON FILE EXPORTED')
     return None
 
-@timeit
 def get_food_json(pdf_file_path):
-    json = ''
+
+    """
+    :param pdf: gets food description and amounts
+    :return: structured json file in results directory
+    """
+
+    json_1 = ''
     system_prompt = """Create a JSON for the food description and amount. Do not include other information in the JSON."""
     model="gpt-4o-mini"
     result = get_llm_response(pdf_file_path, model, system_prompt)
     content = str(result)
     content_string = content.replace("\\n", "\n").replace("\\'", "'").replace("\\\"", "\"")
-    json = extract_json(content_string)
-    return json
+    json_1 = extract_json(content_string)
 
-@timeit
+    return json_1
+
 def get_llm_response(pdf_file_path, model, system_prompt):
-    import os
-    from langchain_community.document_loaders import PyPDFLoader
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
-    from langchain_openai import OpenAIEmbeddings
-    from langchain_core.vectorstores import InMemoryVectorStore
-    from langchain import hub
-    from langchain_openai import ChatOpenAI
-    from langchain_core.output_parsers import JsonOutputParser
+
+    """
+    :param pdf_file_path:
+    :param model: OpenAI model
+    :param system_prompt:
+    :return: llm prompt
+    """
     
     loader = PyPDFLoader(pdf_file_path)
     docs = loader.load()
@@ -295,7 +316,7 @@ def get_llm_response(pdf_file_path, model, system_prompt):
     )
     all_splits = text_splitter.split_documents(docs)
 
-    #ingestion
+    # ingestion
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large", api_key=os.environ.get("OPENAI_API_KEY"))
     vector_store = InMemoryVectorStore(embeddings)
     vector_store.add_documents(documents=all_splits)
@@ -312,43 +333,14 @@ def get_llm_response(pdf_file_path, model, system_prompt):
 
     return llm.invoke(prompt)
 
-@timeit
 def extract_json(text):
-    import re
+
+    """
+    :param text:
+    :return: json
+    """
+
     match = re.search(r'```json\n({.*?})\n```', text, re.DOTALL)
     if match:
         return match.group(1)
     return None
-
-# To test PDF
-# pdf_file_path = "./Food and Beverage Diary Cover Sheet.pdf"
-# print(get_json(pdf_file_path))
-# print(get_food_json(pdf_file_path))
-
-# To test plaintext
-plaintext = '''Name: Jane Doe Date: 3/9/2025
-Telephone: 214.920.9999
-Physician: Sarah Connor
-Physician phone: 888.777.6666
-Height: 180 inches
-Weight: 172 lbs
-DOB: 09/09/1979
-Age: 46 years
-24-hr Diet Recall
-Time	Place	Amount	Food Description	Notes
-8 am	Kitchen	¾ cup	Raisin Bran	
-		½ cup	Apple juice	
-		1 medium	Fresh peach	
-12 pm	Dining table	½ cup	Ground beef	
-		1 cup	Mushroom stew	
-		½ cup	Rice	
-		¼ cup	Green beans	
-		8 oz	Water	
-4 pm	Kitchen	½ cup	Pretzels	
-		1 oz	Chocolate	
-7 pm	Dining table	1 cup	Spaghetti	
-		½ cup	Ground beef	
-		8 oz	Water	
-				
-'''
-# print(get_json_plaintext(plaintext))
