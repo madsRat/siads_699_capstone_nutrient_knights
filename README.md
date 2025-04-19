@@ -37,6 +37,8 @@ To use RoboDietitan, you will need Python 3.12.
 
 ## How to use RoboDietitian
 
+0. To start RoboDietitian, run _**main.py**_
+
 1. Enter your API keys. 
    2. This is required to access FDA food databases and OpenAI's LLM.
 
