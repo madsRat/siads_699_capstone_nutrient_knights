@@ -1,4 +1,4 @@
-# RoboDietitian
+# 🌿 RoboDietitian
 
 ## Hello! Welcome.
 
