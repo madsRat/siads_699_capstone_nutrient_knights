@@ -33,7 +33,7 @@ To use RoboDietitan, you will need Python 3.12.
 1. Install: **_Python 3.12.3_** https://www.python.org/downloads/release/python-3123/
 2. In your terminal/command window, enter: **_pip install -r requirements.txt_**
 3. API Key for _OpenAI_: https://openai.com/api
-4. API Key for _FDA FoodData Central Database_ (Free): https://fdc.nal.usda.gov/api-guide
+4. API Key for _USDA FoodData Central Database_ (Free): https://fdc.nal.usda.gov/api-guide
 
 ## How to use RoboDietitian
 
@@ -41,7 +41,7 @@ To use RoboDietitan, you will need Python 3.12.
 
 1. Enter your API keys. 
 
-This is required to access FDA food databases and OpenAI's LLM.
+This is required to access USDA food databases and OpenAI's LLM.
 
 ![UI Preview](images/step_1_enter_api_keys.png)
 

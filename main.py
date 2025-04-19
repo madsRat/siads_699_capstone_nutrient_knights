@@ -42,7 +42,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.max_threads = QThread.idealThreadCount()
         self.threadpool.setMaxThreadCount(self.max_threads)
 
-        # create a separate thread pool for querying FDA food database. Ensures threads are independent and safe.
+        # create a separate thread pool for querying USDA food database. Ensures threads are independent and safe.
         self.threadpool_extract_nutrients = QThreadPool()
         self.threadpool_extract_nutrients.setMaxThreadCount(self.max_threads)
 
@@ -105,7 +105,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def check_API_keys(self):
 
         """
-        Checks if API keys for OpenAI and FDA Food datasets are valid.
+        Checks if API keys for OpenAI and USDA Food datasets are valid.
         If keys are valid, then they are saved to the main gui.
         """
 
@@ -122,7 +122,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 print("Other OpenAI error:", str(e))
                 return False
 
-        # check FDA API key
+        # check USDA API key
         def is_fdc_api_key_valid(api_key):
 
             url = "https://api.nal.usda.gov/fdc/v1/foods/search"
@@ -156,12 +156,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.openAI_key = ''
             self.show_popup(error_msg)
 
-        # save FDA FoodData Central API key if valid
+        # save USDA FoodData Central API key if valid
         if is_fdc_api_key_valid(self.fda_key):
-            print("✅ FDA FoodData Central API key is valid!")
+            print("✅ USDA FoodData Central API key is valid!")
             # self.fda_key already referenced in calculator_nutrient_table.py
         else:
-            error_msg = "❌ Invalid FDA FoodData Central API key. Please try again."
+            error_msg = "❌ Invalid USDA FoodData Central API key. Please try again."
             print(error_msg)
             self.fda_key = ''
             self.show_popup(error_msg)
@@ -196,8 +196,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         layout.addWidget(label1)
         layout.addWidget(self.openAI_API_key)
 
-        # FDA Food Dataset header
-        label2 = QLabel("FDA FoodData Central")
+        # USDA Food Dataset header
+        label2 = QLabel("USDA FoodData Central")
         self.fda_API_key = QLineEdit()
         self.fda_API_key.setText(self.fda_key)
         self.fda_API_key.setEchoMode(QLineEdit.Password)
@@ -450,7 +450,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.start_rd_chatbot_thread()
 
     def show_internet_connection_error(self, error):
-        # show pop up in internet connection not present. internet required for FDA and OpenAI endpoints.
+        # show pop up in internet connection not present. internet required for USDA and OpenAI endpoints.
         self.show_popup(error)
 
         # Enable results tab
