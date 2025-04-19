@@ -1,0 +1,17 @@
+Name: Carmen Reyes
+Date: 04/08/2025
+Telephone: 555.123.1001
+Physician: Dr. Marcus Lee
+Physician phone: 800.555.1001
+Height: 65 inches
+Weight: 126 lbs
+DOB: 02/02/1976
+Age: 49 years
+Sex: Male
+Activity Level: low active
+
+24-hr Diet Recall
+8 am, Kitchen: 1 cup Cherrios, 1 cup Apple, 1 cup Skim milk
+12 pm, Dining table: 1 cup Spaghetti, 1 cup egg, ½ cup Pineapple, 1 cup Lemonade
+3 pm, Kitchen: 8 oz Protein shake, 1 oz Almonds
+7 pm, Dining table: 6 oz Grilled chicken, ½ cup Rice, ½ cup Green beans, 2 cup Lemonade

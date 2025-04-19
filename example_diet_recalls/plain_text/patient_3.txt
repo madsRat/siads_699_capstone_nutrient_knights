@@ -1,0 +1,17 @@
+Name: Jordan Smith
+Date: 04/08/2025
+Telephone: 555.123.1002
+Physician: Dr. Alice Brennan
+Physician phone: 800.555.1002
+Height: 66 inches
+Weight: 127 lbs
+DOB: 03/03/1977
+Age: 48 years
+Sex: Female
+Activity Level: active
+
+24-hr Diet Recall
+8 am, Kitchen: 1 cup Oatmeal, 1 cup Banana, 1 cup Coffee
+12 pm, Dining table: 3 oz Turkey sandwich, 1/2 cup Carrot sticks, 3 cup Apple, 8 oz Water
+3 pm, Kitchen: 1 oz Apple, 2 oz Peanut butter
+7 pm, Dining table: 5 oz Beef stew, ½ cup Rice, ½ cup Carrots, 1 cup Iced tea

@@ -1,0 +1,17 @@
+Name: Alex Monroe
+Date: 04/08/2025
+Telephone: 555.123.1000
+Physician: Dr. Eva Cortez
+Physician phone: 800.555.1000
+Height: 64 inches
+Weight: 125 lbs
+DOB: 01/01/1975
+Age: 50 years
+Sex: Female
+Activity Level: inactive
+
+24-hr Diet Recall
+8 am, Kitchen: 1 cup Greek yogurt, ½ cup Raspberries, 4 oz Granola bar
+12 pm, Dining table: 5 oz Quinoa and veggies, 1 cup egg, ½ cup Pineapple, 8 oz Lemonade
+3 pm, Kitchen: 2 oz Granola bar, 1 cup Iced tea
+7 pm, Dining table: 4 oz Grilled salmon, ½ cup Rice, ½ cup Broccoli, 2 cup Sparkling water
