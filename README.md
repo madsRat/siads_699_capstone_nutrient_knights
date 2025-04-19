@@ -40,19 +40,23 @@ To use RoboDietitan, you will need Python 3.12.
 0. To start RoboDietitian, run _**main.py**_
 
 1. Enter your API keys. 
-   2. This is required to access FDA food databases and OpenAI's LLM.
+
+This is required to access FDA food databases and OpenAI's LLM.
 
 ![UI Preview](images/step_1_enter_api_keys.png)
 
 2. Enter patient's 24-hour Diet Recall 
-   3. You can enter 24-hour diet recall via plain text or pdf. Examples are provided in _example_diet_recalls_ directory
-4. Click **_Calculate_**
+
+You can enter 24-hour diet recall via plain text or pdf. Examples are provided in _example_diet_recalls_ directory
+
+3. Click **_Calculate_**
 
 ![UI Preview](images/step_2_enter_diet_recall.png)
 
-3. Review Nutrient Analysis Results
-   4. Nutrient deficiencies are highlighted in red.
-   5. The RD Chatbot is availble to answer questions related to patients 24-hour diet recall.
+4. Review Nutrient Analysis Results
+
+Nutrient deficiencies are highlighted in red. The RD Chatbot is availble to answer questions related to patients 
+24-hour diet recall.
 
 ![UI Preview](images/step_3_review_results.png)
 
