@@ -515,7 +515,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
             try:
                 self.process = subprocess.Popen(["python3", "-m", "streamlit", "run", "robo_dietician.py",
-                                                 "--theme.base=dark", "--server.headless=true", server_input, "--" ,
+                                                 "--theme.base=dark", "--server.headless=true", server_input, "--",
                                                  user_input])
             except Exception as e:
                 print("Error running subprocesses", e)
@@ -534,6 +534,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.streamlit_worker.stop()
 
 if __name__ == "__main__":
+
     app = QtWidgets.QApplication(sys.argv)
     application = ApplicationWindow()
     application.show()
