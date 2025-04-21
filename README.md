@@ -17,7 +17,7 @@ Developers for this project are:
 4. Wei Liu
 
 **_Important Note:_** RoboDietitian should not be used for personal, medical, or health related applications.
-This project is purely experimental and the results should be reviewed for accuracy.
+This project is purely academic/experimental and the results should be reviewed for accuracy.
 
 ## Why Should I use RoboDietitian?
 RoboDietitian addresses two problems. 
@@ -34,6 +34,12 @@ To use RoboDietitan, you will need Python 3.12.
 2. In your terminal/command window, enter: **_pip install -r requirements.txt_**
 3. API Key for _OpenAI_: https://openai.com/api
 4. API Key for _USDA FoodData Central Database_ (Free): https://fdc.nal.usda.gov/api-guide
+
+## Data Access Statement
+1. USDA FoodData Central Database: Anyone may access and use the API.  https://fdc.nal.usda.gov/api-guide
+2. National Academies, Dietary Reference Intakes: All downloadable National Academies titles are free to be used for personal and/or non-commercial
+   academic use. https://nap.nationalacademies.org/catalog/11537/dietary-reference-intakes-the-essential-guide-to-nutrient-requirements
+3. Patient Diet Recalls: Synthetically generated. Located in 'example_diet_recalls' directory.
 
 ## How to use RoboDietitian
 
