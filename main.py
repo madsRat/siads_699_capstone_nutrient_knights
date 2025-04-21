@@ -26,6 +26,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     """
     Main application window for RoboDietitian.
     RoboDietitian is an application that can calculate nutrient deficiencies for healthy individuals over the age of 1.
+    RoboDietitian is intended for academic purposes only.
     RoboDietitian is not intended for personal health or medical applications.
     RoboDietitian should only be used in academic setting; Created for University of Michigan, SIADS 699 Capstone class.
     Developed by Daniel Torrecampo, Ayan Banerjee, Richard Chaulker, and Wei Liu.
@@ -137,10 +138,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 if response.status_code == 200:
                     return True
                 elif response.status_code == 401:
-                    print("❌ Unauthorized: Invalid API key.")
+                    print("Unauthorized: Invalid API key.")
                     return False
                 else:
-                    print(f"⚠️ Unexpected status code: {response.status_code}")
+                    print(f"Unexpected status code: {response.status_code}")
                     return False
             except requests.exceptions.RequestException as e:
                 print(f"Error during request: {e}")
@@ -148,20 +149,20 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         # save OpenAI API key if valid
         if is_api_key_valid(self.openAI_key):
-            print("✅ OpenAI API key is valid!")
+            print("OpenAI API key is valid!")
             os.environ["OPENAI_API_KEY"] = self.openAI_key
         else:
-            error_msg = "❌ Invalid OpenAI API key. Please try again."
+            error_msg = "Invalid OpenAI API key. Please try again."
             print(error_msg)
             self.openAI_key = ''
             self.show_popup(error_msg)
 
         # save USDA FoodData Central API key if valid
         if is_fdc_api_key_valid(self.fda_key):
-            print("✅ USDA FoodData Central API key is valid!")
+            print("USDA FoodData Central API key is valid!")
             # self.fda_key already referenced in calculator_nutrient_table.py
         else:
-            error_msg = "❌ Invalid USDA FoodData Central API key. Please try again."
+            error_msg = "Invalid USDA FoodData Central API key. Please try again."
             print(error_msg)
             self.fda_key = ''
             self.show_popup(error_msg)
